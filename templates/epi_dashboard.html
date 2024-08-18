@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des EPI</title>
+    <!-- Inclure Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des EPI</h1>
+    
+    <div id="epi-pie-chart-site"></div>
+    <div id="epi-treemap-function"></div>
+
+    <script>
+        function loadEpiData() {
+            $.getJSON('/api/epi_data', function(data) {
+                // Répartition des EPI par SITE
+                var dataSite = [{
+                    values: data.epi_by_site.values,
+                    labels: data.epi_by_site.labels,
+                    type: 'pie'
+                }];
+                
+                var layoutSite = {
+                    title: 'Répartition des EPI par SITE'
+                };
+                
+                Plotly.newPlot('epi-pie-chart-site', dataSite, layoutSite);
+                
+                // Répartition des EPI par Fonction avec un graphique en treemap
+                var dataFunction = [{
+                    type: "treemap",
+                    labels: data.epi_by_function.labels,
+                    parents: Array(data.epi_by_function.labels.length).fill(""),
+                    values: data.epi_by_function.values,
+                    textinfo: "label+value+percent entry"
+                }];
+                
+                var layoutFunction = {
+                    title: 'Répartition des EPI par Fonction'
+                };
+                
+                Plotly.newPlot('epi-treemap-function', dataFunction, layoutFunction);
+            });
+        }
+
+        // Charger les données au démarrage
+        $(document).ready(function() {
+            loadEpiData();
+        });
+    </script>
+</body>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add New Record</h2>
+    <form method="POST">
+        {% for col in columns %}
+            <label for="{{ col }}">{{ col }}</label>
+            <input type="text" id="{{ col }}" name="{{ col }}">
+            <br>
+        {% endfor %}
+        <button type="submit">Ajouter</button>
+    </form>
+    {% endblock %}

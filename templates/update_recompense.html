@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="animated-header">Mettre à Jour Récompense</h2>
+
+<form method="post">
+    {% for column, value in data.items() %}
+        <div class="mb-3">
+            <label for="{{ column }}" class="form-label">{{ column }}</label>
+            <input type="text" class="form-control" id="{{ column }}" name="{{ column }}" value="{{ value }}" required>
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Mettre à Jour</button>
+</form>
+
+{% endblock %}

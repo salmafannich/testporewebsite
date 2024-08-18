@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Employee Management PoreApp</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/lumen/bootstrap.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            color: #343a40;
+            transition: background-color 0.5s, color 0.5s;
+            margin: 0;
+            padding-bottom: 60px;
+        }
+
+        .navbar {
+            background-color: #343a40;
+        }
+
+        .navbar-brand, .nav-link {
+            color: #edf1f4 !important;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: vert !important;
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 60px; /* Initial width for icons */
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #343a40;
+            padding-top: 20px;
+            transition: width 0.2s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.open {
+            width: 250px; /* Full width for menu */
+        }
+
+        .sidebar a {
+            padding: 15px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #edf1f4;
+            display: block;
+            transition: background 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar a:hover {
+          background-color: #007bff; /* Bleu Bootstrap */
+          color: #fff;
+        }
+
+        .sidebar .menu-icon {
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .sidebar .menu-item {
+            display: none; /* Hide menu items initially */
+        }
+
+        .sidebar.open .menu-item {
+            display: block; /* Show menu items when expanded */
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #495057;
+            min-width: 200px;
+            z-index: 1;
+        }
+
+        .dropdown-content a {
+            color: #edf1f4;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #616567;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .content {
+            margin-left: 60px; /* Adjust for initial sidebar width */
+            padding: 20px;
+            transition: margin-left 0.2s ease;
+        }
+
+        .content.sidebar-open {
+            margin-left: 250px; /* Adjust for expanded sidebar width */
+        }
+
+        .alert {
+            margin-top: 1rem;
+            border-radius: 0.25rem;
+        }
+
+        .icon {
+            margin-right: 8px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, box-shadow 0.3s;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background-color: #0056b3;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark-theme {
+            background-color: #343a40 !important;
+            color: #edf1f4 !important;
+        }
+        .logo-container {
+        position: absolute;
+        top: 20px; /* Ajuster selon la position souhaitée */
+        left: 40px; /* Augmenter pour déplacer vers la droite */
+        display: flex;
+        flex-direction: row; /* Aligner les logos horizontalement */
+        gap: 10px; /* Espace entre les logos */
+        z-index: 1001; /* Pour être au-dessus de la barre latérale */
+    }
+</style>
+
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <a class="navbar-brand" href="#"><i class="bi bi-people"></i> </a>
+    </nav>
+    <div class="logo-container">
+        <img src="static/images/SGTM LOGO.jpg" alt="SGTM Logo" style="max-width: 4%; height: auto; margin: 0.5px;">
+        <img src="static/images/STFA Logo.png" alt="STFA Logo" style="max-width: 4%; height: auto; margin: 0.5px;">
+    </div>
+    
+
+    <div class="sidebar">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+            <i class="bi bi-list"></i>
+        </button>
+        
+        <a href="{{ url_for('home') }}" class="menu-icon"><i class="bi bi-house"></i>Home</a>
+    
+        {% if 'user_id' in session %}
+            <div class="dropdown">
+                <a href="#" class="nav-link dropdown-toggle menu-icon" data-toggle="dropdown"><i class="bi bi-box-seam"></i>Suivi</a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('view_epi') }}"><i class="bi bi-box-seam"></i> Suivi de Remise des EPI</a>
+                    <a href="{{ url_for('view_registre') }}"><i class="bi bi-book"></i> Suivi des sanctions</a>
+                    <a href="{{ url_for('view_formation') }}"><i class="bi bi-journal-bookmark"></i> Suivi de Formation</a>
+                    <a href="{{ url_for('view_sens') }}"><i class="bi bi-lightbulb"></i> Suivi de Sensibilisation</a>
+                    <a href="{{ url_for('view_acc') }}"><i class="bi bi-exclamation-triangle"></i> Accident de Travail</a>
+                    <a href="{{ url_for('view_discipline') }}"><i class="bi bi-shield-check"></i> Suivi des mesures disciplinaires</a>
+                    <a href="{{ url_for('view_visite_medicale') }}"><i class="bi bi-heart-pulse"></i> Suivi des visites médicales</a>
+                    <a href="{{ url_for('view_habilitation') }}"><i class="bi bi-file-earmark-medical"></i> Habilitations</a>
+                    <a href="{{ url_for('view_recompense') }}"><i class="bi bi-file-earmark-medical"></i>Récompenses</a>
+                </div>
+            </div>
+            
+            <div class="dropdown">
+                <a href="#" class="nav-link dropdown-toggle menu-icon" data-toggle="dropdown"><i class="bi bi-bar-chart"></i>Visualisations</a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('epi_dashboard') }}"><i class="bi bi-bar-chart"></i>EPI Visualisation</a>
+                </div>
+            </div>
+            
+            <a href="{{ url_for('search_employee') }}" class="menu-icon"><i class="bi bi-search"></i>Chercher Employee</a>
+            <a href="{{ url_for('history') }}" class="menu-icon"><i class="bi bi-archive"></i>Historique</a>
+            <a href="{{ url_for('logout') }}" class="menu-icon"><i class="bi bi-box-arrow-right"></i>Log out</a>
+        {% else %}
+            <a href="{{ url_for('register') }}" class="menu-icon"><i class="bi bi-person-plus"></i>Register</a>
+            <a href="{{ url_for('login') }}" class="menu-icon"><i class="bi bi-box-arrow-in-right"></i>Login</a>
+        {% endif %}
+    </div>
+    
+    <div class="content">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} mt-2">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="bi bi-moon"></i> <!-- Icon for dark mode -->
+        </button>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const content = document.querySelector('.content');
+            sidebar.classList.toggle('open');
+            content.classList.toggle('sidebar-open');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-theme');
+            
+            const buttonIcon = document.querySelector('.theme-toggle i');
+            if (body.classList.contains('dark-theme')) {
+                buttonIcon.classList.remove('bi-moon');
+                buttonIcon.classList.add('bi-sun');
+            } else {
+                buttonIcon.classList.remove('bi-sun');
+                buttonIcon.classList.add('bi-moon');
+            }
+        }
+
+        // Charger le thème lors du chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        });
+    </script>
+</body>
+</html>

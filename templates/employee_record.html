@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Record</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Employee Record for Matricule: {{ employee['matricule'] }}</h2>
+
+        <!-- Display EPI Record -->
+        <h3>Suivi de Remise des EPI</h3>
+        {% if employee['epi'] %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    {% for key in employee['epi'][0].keys() %}
+                    <th>{{ key }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in employee['epi'] %}
+                <tr>
+                    {% for value in record.values() %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No EPI records found.</p>
+        {% endif %}
+
+        <!-- Display Formation Record -->
+        <h3>Suivi de Formation</h3>
+        {% if employee['formation'] %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    {% for key in employee['formation'][0].keys() %}
+                    <th>{{ key }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in employee['formation'] %}
+                <tr>
+                    {% for value in record.values() %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No formation records found.</p>
+        {% endif %}
+
+        <!-- Add other records here... -->
+
+    </div>
+</body>
+</html>

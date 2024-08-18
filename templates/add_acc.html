@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Ajouter un nouvel accident de travail</h2>
+
+<form method="post" action="{{ url_for('add_acc') }}">
+    {% for column in columns %}
+        <div class="form-group">
+            <label for="{{ column }}">{{ column }}:</label>
+            <input type="text" name="{{ column }}" class="form-control" id="{{ column }}">
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Ajouter</button>
+</form>
+{% endblock %}

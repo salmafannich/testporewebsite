@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Update Record</h2>
+<form method="POST">
+    <div class="form-group">
+        <label for="date">Date:</label>
+        <input type="date" class="form-control" id="date" name="date" value="{{ record['Date'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="emetteur">Emetteur:</label>
+        <input type="text" class="form-control" id="emetteur" name="emetteur" value="{{ record['Emetteur'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="violateur">Violateur:</label>
+        <input type="text" class="form-control" id="violateur" name="violateur" value="{{ record['Violateur'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="fonction">Fonction:</label>
+        <input type="text" class="form-control" id="fonction" name="fonction" value="{{ record['Fonction'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="matricule">Matricule:</label>
+        <input type="text" class="form-control" id="matricule" name="matricule" value="{{ record['Matricule'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="zone_activite">Zone d'activité:</label>
+        <input type="text" class="form-control" id="zone_activite" name="zone_activite" value="{{ record['Zone d\'activité'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="organisme">Organisme:</label>
+        <input type="text" class="form-control" id="organisme" name="organisme" value="{{ record['Organisme'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="description_infraction">Description de l'infraction:</label>
+        <input type="text" class="form-control" id="description_infraction" name="description_infraction" value="{{ record['Description de l\'infraction'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="wps">WPS (Worst Potential Severity):</label>
+        <input type="text" class="form-control" id="wps" name="wps" value="{{ record['WPS (Worst Potential Severity)'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="categorie">Catégorie:</label>
+        <input type="text" class="form-control" id="categorie" name="categorie" value="{{ record['Catégorie'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="observations_type">Observations Type (Positive=P/ Negative=N):</label>
+        <input type="text" class="form-control" id="observations_type" name="observations_type" value="{{ record['Observations Type (Positive=P/ Negative=N)'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="risque_associe">Risque associé:</label>
+        <input type="text" class="form-control" id="risque_associe" name="risque_associe" value="{{ record['Risque associé'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="evidence_reference">Evidence Reference:</label>
+        <input type="text" class="form-control" id="evidence_reference" name="evidence_reference" value="{{ record['Evidence Reference'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="actions">Actions:</label>
+        <input type="text" class="form-control" id="actions" name="actions" value="{{ record['Actions'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="status">Status (Ouvert/Fermé/En cours):</label>
+        <input type="text" class="form-control" id="status" name="status" value="{{ record['Status (Ouvert/Fermé/En cours)'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="remarques">Remarques:</label>
+        <input type="text" class="form-control" id="remarques" name="remarques" value="{{ record['Remarques'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="nombre_avertissements">Nombre d'avertissements:</label>
+        <input type="text" class="form-control" id="nombre_avertissements" name="nombre_avertissements" value="{{ record['Nombre d\'avertissements'] }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Update</button>
+</form>
+{% endblock %}

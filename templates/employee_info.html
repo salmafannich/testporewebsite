@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informations de l'employé</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+            margin-bottom: 50px;
+            max-width: 900px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        h1, h2, h3 {
+            color: #343a40;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        h2 {
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        h2:before {
+            content: "📄";
+            position: absolute;
+            left: -30px;
+            top: -5px;
+            font-size: 1.5rem;
+            color: #007bff;
+        }
+        table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .table thead th {
+            background-color: #007bff;
+            color: #ffffff;
+            border-top: none;
+        }
+        .table tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+        .table tbody tr:hover {
+            background-color: #e2e6ea;
+            transition: background-color 0.3s ease;
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 20px;
+            color: #ffffff;
+            font-weight: 600;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .btn-primary-custom {
+            background-color: #007bff;
+            border: none;
+        }
+        .btn-primary-custom:hover {
+            background-color: #0056b3;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        .btn-secondary-custom {
+            background-color: #6c757d;
+            border: none;
+        }
+        .btn-secondary-custom:hover {
+            background-color: #5a6268;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: #ffffff;
+            border-bottom: none;
+            border-radius: 15px 15px 0 0;
+            position: relative;
+        }
+        .card-body {
+            padding: 20px;
+            position: relative;
+        }
+        .card-body h3 {
+            color: #343a40;
+        }
+        .card-body h3:before {
+            content: "🔍";
+            position: absolute;
+            left: -30px;
+            font-size: 1.5rem;
+            color: #007bff;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .thead-dark th {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Informations de l'employé</h1>
+
+        {% if employee_info %}
+            <div class="card">
+                <div class="card-header">
+                    <h2>Détails de l'employé</h2>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Champ</th>
+                                <th>Valeur</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key, value in employee_info.items() %}
+                                <tr>
+                                    <td>{{ key }}</td>
+                                    <td>{{ value }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if epi_details %}
+            <div class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Détails des EPI</h2>
+                    </div>
+                    <div class="card-body">
+                        {% for epi_type, details in epi_details.items() %}
+                            <h3>{{ epi_type }}</h3>
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Valeur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for key, value in details.items() %}
+                                        <tr>
+                                            <td>{{ key }}</td>
+                                            <td>{{ value }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if sens_details %}
+            <div class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Détails des Sensibilisations</h2>
+                    </div>
+                    <div class="card-body">
+                        {% for sens_type, details in sens_details.items() %}
+                            <h3>{{ sens_type }}</h3>
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Valeur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for key, value in details.items() %}
+                                        <tr>
+                                            <td>{{ key }}</td>
+                                            <td>{{ value }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if formation_details %}
+            <div class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Détails des Formations</h2>
+                    </div>
+                    <div class="card-body">
+                        {% for formation_type, details in formation_details.items() %}
+                            <h3>{{ formation_type }}</h3>
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Valeur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for key, value in details.items() %}
+                                        <tr>
+                                            <td>{{ key }}</td>
+                                            <td>{{ value }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if disciplinary_details %}
+    <h2>Détails disciplinaires</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Champ</th>
+                    {% for detail in disciplinary_details %}
+                        <th>Employé {{ loop.index }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Date</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Date'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Emetteur</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Emetteur'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Violateur</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Violateur'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Fonction</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Fonction'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>MAT</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['MAT'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Zone d'activité</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Zone d\'activité'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Organisme</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Organisme'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Description de l'infraction</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Description de l\'infraction'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>WPS (Worst Potential Severity)</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['WPS (Worst Potential Severity)'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Catégorie</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Catégorie'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Observations Type (Positive=P/ Negative=N)</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Observations Type (Positive=P/ Negative=N)'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Risque associé</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Risque associé'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Evidence Reference</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Evidence Reference'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Actions</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Actions'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Status (Ouvert/Fermé/En cours)</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Status (Ouvert/Fermé/En cours)'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Remarques</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Remarques'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Nombre d'avertissements</td>
+                    {% for detail in disciplinary_details %}
+                        <td>{{ detail['Nombre d\'avertissements'] }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+
+
+        {% if accident_details %}
+            <div class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Détails des Accidents</h2>
+                    </div>
+                    <div class="card-body">
+                        {% for accident in accident_details %}
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Champ</th>
+                                        <th>Valeur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Date de l'accident</td>
+                                        <td>{{ accident['date de l\'accident'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total jours d'arrêt</td>
+                                        <td>{{ accident['Total jours d\'arret'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Date de reprise de travail</td>
+                                        <td>{{ accident['Date de reprise de travail'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Certificat de guérison</td>
+                                        <td>{{ accident['Certificat de guérison'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>% d'incapacité</td>
+                                        <td>{{ accident['% d\'incapacité'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Observations</td>
+                                        <td>{{ accident['Observations'] }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br> <!-- Ligne de séparation entre les accidents -->
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if habilitation_details %}
+            <div class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Détails des Habilitations</h2>
+                    </div>
+                    <div class="card-body">
+                        {% for habilitation in habilitation_details %}
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Champ</th>
+                                        <th>Valeur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for key, value in habilitation.items() %}
+                                        <tr>
+                                            <td>{{ key }}</td>
+                                            <td>{{ value }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <br> <!-- Ligne de séparation entre les habilitations -->
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if discipline_details %}
+    <h2>Détails de la Discipline</h2>
+    
+<div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Champ</th>
+                    {% for detail in discipline_details %}
+                        <th>Employé {{ loop.index }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>MAT</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['MAT'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>CIN</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['CIN'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Emetteur</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Emetteur'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Violateur</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Violateur'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Fonction</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Fonction'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Date</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Date'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Organisme</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Organisme'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Motif de sanction 1</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Motif de sanction 1'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Type de sanction 1</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Type de sanction 1'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Motif de sanction 2</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Motif de sanction 2'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Type de sanction 2</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Type de sanction 2'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Motif de sanction 3</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Motif de sanction 3'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Type de sanction 3</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Type de sanction 3'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Observations</td>
+                    {% for detail in discipline_details %}
+                        <td>{{ detail['Observations'] }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+</div>
+    
+{% endif %}
+
+
+        {% if visite_medicale_details %}
+    <h2>Détails de la visite médicale</h2>
+    <div class="container">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Champ</th>
+                    {% for detail in visite_medicale_details %}
+                        <th>Employé {{ loop.index }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>MAT</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['MAT'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>NOM PRENOM</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['NOM PRENOM'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>FONCTION</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['FONCTION'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>CIN</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['CIN'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>CNSS</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['CNSS'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>DATE DE NAISSANCE</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['DATE DE NAISSANCE'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>DATE D'EMBAUCHE</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['DATE D\'EMBAUCHE'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Certificat d'aptitude physique d'embauche</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['Certificat d\'aptitude physique d\'embauche'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>DATE DERNIÈRE VISITE</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['DATE DERNIÈRE VISITE'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Date Viste programmée</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['Date Viste programmée'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Date de visite médicale 2</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['Date de visite médicale 2'] }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Observations générales</td>
+                    {% for detail in visite_medicale_details %}
+                        <td>{{ detail['Observations générales'] }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+
+    </div>
+</body>
+</html>

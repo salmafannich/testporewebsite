@@ -2560,6 +2560,29 @@ import requests
 import msal
 import os
 
+@app.route('/search_employee', methods=['GET', 'POST'])
+def search_employee():
+    if request.method == 'POST':
+        mat = request.form['mat']
+        # Remplacez get_employee_info par votre fonction réelle pour obtenir les détails
+        employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details = get_employee_info(mat)
+        
+        if employee_info:
+            return render_template('employee_info.html',
+                                   employee_info=employee_info,
+                                   epi_details=epi_details,
+                                   sens_details=sens_details,
+                                   formation_details=formation_details,
+                                   disciplinary_details=disciplinary_details,
+                                   accident_details=accident_details,
+                                   habilitation_details=habilitation_details,
+                                   discipline_details=discipline_details,
+                                   visite_medicale_details=visite_medicale_details)
+        else:
+            flash('MAT not found in any of the files.', 'danger')
+            return redirect(url_for('search_employee'))
+    
+    return render_template('search_employee.html')
 
 @app.route('/download_pdf/<mat>')
 def download_pdf(mat):

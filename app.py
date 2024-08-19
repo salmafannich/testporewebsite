@@ -2561,7 +2561,7 @@ import msal
 import os
 
 # Configuration de pdfkit
-path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+path_wkhtmltopdf = r'wkhtmltopdf.exe'
 config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
 
 # Configuration des informations d'application

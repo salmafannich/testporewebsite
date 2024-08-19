@@ -2205,14 +2205,15 @@ def extract_number_from_string(s):
     return 0
 
 # Chemins vers les fichiers Excel
-EPI_FILE = r'data of pore app\suivi de remise des EPI Finale.xlsx'
-FORMATION_FILE = r'data of pore app\fiche formation finale.xlsx'
-SENS_FILE = r'data of pore app\Gestion des sensibilisation (1).xlsx'
-DISCIPLINARY_FILE = r'data of pore app\Registre du suivi des actions disciplinaires.xlsx'
-ACCIDENT_FILE = r'data of pore app\Accident de travail.xlsx'
-HABILITATION_FILE = r'data of pore app\Habilitation.xlsx'
-DISCIPLINE_FILE = r'data of pore app\Suivi des mesures disciplinaires.xlsx'
-VISITE_MEDICALE_FILE = r'data of pore app\Suivi-des-visites-médicales.xlsx' 
+EPI_FILE = 'data of pore app/suivi de remise des EPI Finale.xlsx'
+FORMATION_FILE = 'data of pore app/fiche formation finale.xlsx'
+SENS_FILE = 'data of pore app/Gestion des sensibilisation (1).xlsx'
+DISCIPLINARY_FILE = 'data of pore app/Registre du suivi des actions disciplinaires.xlsx'
+ACCIDENT_FILE = 'data of pore app/Accident de travail.xlsx'
+HABILITATION_FILE = 'data of pore app/Habilitation.xlsx'
+DISCIPLINE_FILE = 'data of pore app/Suivi des mesures disciplinaires.xlsx'
+VISITE_MEDICALE_FILE = 'data of pore app/Suivi-des-visites-médicales.xlsx'
+
 # Charger les fichiers Excel
 dataframes = {}
 

@@ -121,7 +121,7 @@ def view_epi():
                     'Lunettes (Anti-poussière): date de remise', 'Bote de sécurité: date de remise',
                     'Gilet de sauvetage: date de remise', 'Autre: date de remise']
 
-    # Convertir les colonnes de date en datetime et formater
+   # Convertir les colonnes de date en datetime et formater
     for col in date_columns:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
@@ -153,6 +153,8 @@ def view_epi():
         columns=columns,
         page=page,
         total_pages=total_pages,
+        per_page=per_page,  # Ajouter per_page ici
+        total=total,  # Ajouter total ici
         max=max,
         min=min
     )
@@ -223,6 +225,18 @@ def view_epi1():
     return render_template('view_epi1.html', data=data, columns=columns)
 @app.route('/add_epi', methods=['GET', 'POST'])
 def add_epi():
+    try:
+        # Charger les fonctions existantes depuis Excel
+        excel_file_path = r'data of pore app\suivi de remise des EPI Finale.xlsx'
+        df = pd.read_excel(excel_file_path)
+
+        # Récupérer la liste des fonctions uniques
+        fonctions = df['FONCTION'].dropna().unique().tolist()
+
+    except FileNotFoundError:
+        flash("Fichier non trouvé : data of pore app\\suivi de remise des EPI Finale.xlsx", "danger")
+        fonctions = []
+
     if request.method == 'POST':
         form_data = {
             'Affectation': request.form.get('affectation', None),
@@ -263,8 +277,6 @@ def add_epi():
         }
 
         try:
-            excel_file_path = r'data of pore app\suivi de remise des EPI Finale.xlsx'
-
             # Charger le fichier Excel existant avec openpyxl
             wb = load_workbook(excel_file_path)
 
@@ -296,14 +308,11 @@ def add_epi():
             log_action("Ajout Nouveau Epi")
             flash("Nouvel enregistrement ajouté avec succès !", "success")
             return redirect(url_for('view_epi'))
-        except FileNotFoundError:
-            flash("Fichier non trouvé : data of pore app\\suivi de remise des EPI Finale.xlsx", "danger")
-            return redirect(url_for('add_epi'))
         except Exception as e:
             flash(f"Erreur : {str(e)}", "danger")
             return redirect(url_for('add_epi'))
 
-    return render_template('add_epi.html')
+    return render_template('add_epi.html', fonctions=fonctions)
 
 @app.route('/add_epi1', methods=['GET', 'POST'])
 def add_epi1():
@@ -423,27 +432,27 @@ def update_epi1(row_id):
     return render_template('update_epi1.html', record=record)
 
 
-@app.route('/delete_epi/<int:row_id>', methods=['GET', 'POST'])
-def delete_epi(row_id):
-    # Charger le fichier Excel dans un DataFrame
+@app.route('/confirm_delete_epi/<int:index>', methods=['GET', 'POST'])
+def confirm_delete_epi(index):
     df = pd.read_excel('data of pore app/suivi de remise des EPI Finale.xlsx', engine='openpyxl')
 
     if request.method == 'POST':
-        # Vérifier si l'utilisateur a confirmé la suppression
-        if request.form['confirm'] == 'yes':
-            # Supprimer l'enregistrement à l'index spécifié (row_id)
-            df.drop(row_id, inplace=True)
-            
-            # Enregistrer le DataFrame mis à jour dans le fichier Excel
-            df.to_excel('data of pore app/suivi de remise des EPI Finale.xlsx', index=False, engine='openpyxl')
-            log_action("Suppresion Epi")
-            flash("Record deleted successfully!", "success")
-            return redirect(url_for('view_epi'))
+        # Supprimer l'enregistrement à l'index spécifié (index)
+        df = df.drop(index)
+        
+        # Enregistrer le DataFrame mis à jour dans le fichier Excel
+        df.to_excel('data of pore app/suivi de remise des EPI Finale.xlsx', index=False, engine='openpyxl')
+        
+        # Enregistrer l'action dans le journal et afficher un message de succès
+        log_action("Suppression d'une remise EPI")
+        flash("Enregistrement supprimé avec succès !", "success")
+        
+        return redirect(url_for('view_epi'))
 
-    # Récupérer l'enregistrement à supprimer basé sur row_id
-    record = df.iloc[row_id].to_dict()
+    # Récupérer l'enregistrement à supprimer basé sur l'index
+    record = df.iloc[index].to_dict()
+    return render_template('confirm_delete_epi.html', record=record, index=index)
 
-    return render_template('delete_epi.html', record=record)
 
 
 @app.route('/delete_epi1/<int:row_id>', methods=['GET', 'POST'])
@@ -467,10 +476,8 @@ def delete_epi1(row_id):
     record = df.iloc[row_id].to_dict()
 
     return render_template('delete_epi1.html', record=record)
-
 @app.route('/view_registre', methods=['GET', 'POST'])
 def view_registre():
-   
     excel_file = r'data of pore app/Registre du suivi des actions disciplinaires.xlsx'
     df = pd.read_excel(excel_file, engine='openpyxl')
 
@@ -492,7 +499,7 @@ def view_registre():
 
     # Pagination
     page = int(request.args.get('page', 1))  # Numéro de page (défaut à 1)
-    per_page = 20  # Nombre de lignes par page
+    per_page = 10  # Nombre de lignes par page
     total = len(data)
     start = (page - 1) * per_page
     end = start + per_page
@@ -500,18 +507,37 @@ def view_registre():
     paginated_data = data[start:end]
     total_pages = (total + per_page - 1) // per_page  # Calcul du nombre total de pages
 
-    return render_template('view_registre.html',
-                           data=paginated_data,
-                           columns=columns,
-                           page=page,
-                           total_pages=total_pages,
-                           max=max,
-                           min=min)
+    return render_template(
+        'view_registre.html',
+        data=paginated_data,
+        columns=columns,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,  # Ajouter per_page ici
+        total=total,  # Ajouter total ici
+        max=max,
+        min=min
+    )
+
 
 @app.route('/add_registre', methods=['GET', 'POST'])
 def add_registre():
+    try:
+        # Charger le fichier Excel existant
+        df = pd.read_excel('data of pore app/Registre du suivi des actions disciplinaires.xlsx', engine='openpyxl')
+        
+        # Extraire les fonctions uniques
+        fonctions = df['Fonction'].dropna().unique().tolist()
+
+    except FileNotFoundError:
+        flash("File not found: 'data of pore app/Registre du suivi des actions disciplinaires.xlsx'", "danger")
+        return redirect(url_for('add_registre'))
+    except Exception as e:
+        flash(f"Erreur lors du chargement des fonctions: {str(e)}", "danger")
+        return redirect(url_for('add_registre'))
+
     if request.method == 'POST':
-        # Get the form data
+        # Récupérer les données du formulaire
         form_data = {
             'Date': request.form['date'],
             'Emetteur': request.form['emetteur'],
@@ -533,33 +559,9 @@ def add_registre():
         }
 
         try:
-            # Charger le fichier Excel existant
-            df = pd.read_excel('data of pore app/Registre du suivi des actions disciplinaires.xlsx', engine='openpyxl')
-
-            # Vérifier si le DataFrame chargé est vide
-            if df.empty:
-                # Créer un nouveau DataFrame avec les colonnes définies
-                df = pd.DataFrame(columns=['Date', 'Emetteur', 'Violateur', 'Fonction', 'MAT', 'Zone d\'activité', 
-                                           'Organisme', 'Description de l\'infraction', 'WPS (Worst Potential Severity)', 
-                                           'Catégorie', 'Observations Type (Positive=P/ Negative=N)', 'Risque associé', 
-                                           'Evidence Reference', 'Actions', 'Status (Ouvert/Fermé/En cours)', 'Remarques', 
-                                           'Nombre d\'avertissements'])
-
-            # Créer un nouveau DataFrame pour le nouvel enregistrement
+            # Ajouter l'enregistrement au DataFrame
             new_record = pd.DataFrame([form_data])
-
-            # Concaténer le nouveau record avec le DataFrame existant
             df = pd.concat([df, new_record], ignore_index=True)
-
-            # Remplir les valeurs NaN dans la colonne Fonction avec ''
-            df['Fonction'].fillna('', inplace=True)
-
-            # Réorganiser les colonnes pour garantir l'ordre correct
-            df = df[['Date', 'Emetteur', 'Violateur', 'Fonction', 'MAT', 'Zone d\'activité', 
-                     'Organisme', 'Description de l\'infraction', 'WPS (Worst Potential Severity)', 
-                     'Catégorie', 'Observations Type (Positive=P/ Negative=N)', 'Risque associé', 
-                     'Evidence Reference', 'Actions', 'Status (Ouvert/Fermé/En cours)', 'Remarques', 
-                     'Nombre d\'avertissements']]
 
             # Sauvegarder le DataFrame mis à jour dans le fichier Excel
             df.to_excel('data of pore app/Registre du suivi des actions disciplinaires.xlsx', index=False, engine='openpyxl')
@@ -567,11 +569,11 @@ def add_registre():
             flash("New record added successfully!", "success")
             return redirect(url_for('view_registre'))
 
-        except FileNotFoundError:
-            flash("File not found: 'data of pore app/Registre du suivi des actions disciplinaires.xlsx'", "danger")
+        except Exception as e:
+            flash(f"Erreur lors de l'enregistrement : {str(e)}", "danger")
             return redirect(url_for('add_registre'))
 
-    return render_template('add_registre.html')
+    return render_template('add_registre.html', fonctions=fonctions)
 
 
 @app.route('/update_registre/<int:row_id>', methods=['GET', 'POST'])
@@ -615,31 +617,40 @@ def update_registre(row_id):
     record = df.iloc[row_id]
 
     return render_template('update_registre.html', record=record, row_id=row_id)
-@app.route('/delete_registre/<int:row_id>', methods=['GET', 'POST'])
-def delete_registre(row_id):
-    # Charger le fichier Excel dans un DataFrame
-    df = pd.read_excel('data of pore app/Registre du suivi des actions disciplinaires.xlsx', engine='openpyxl')
+
+@app.route('/confirm_delete_registre/<int:index>', methods=['GET', 'POST'])
+def confirm_delete_registre(index):
+    file_path = 'data of pore app/Registre du suivi des actions disciplinaires.xlsx'
+    df = pd.read_excel(file_path, engine='openpyxl')
 
     if request.method == 'POST':
-        # Vérifier si le champ 'confirm' est présent dans request.form
-        confirm = request.form.get('confirm')
-        if confirm == 'yes':
-            # Supprimer l'enregistrement à l'index spécifié
-            df.drop(row_id, inplace=True)
-            
-            # Réindexer le DataFrame après suppression
-            df.reset_index(drop=True, inplace=True)
-            
-            # Sauvegarder le DataFrame mis à jour dans le fichier Excel
-            df.to_excel('data of pore app/Registre du suivi des actions disciplinaires.xlsx', index=False, engine='openpyxl')
-            log_action("Suppresion de sanction")
-            flash("Record deleted successfully!", "success")
-            return redirect(url_for('view_registre'))  # Rediriger après la suppression
+        # Supprimer l'enregistrement à l'index spécifié
+        df = df.drop(index)
+        
+        # Réinitialiser les index
+        df.reset_index(drop=True, inplace=True)
+        
+        # Enregistrer le DataFrame mis à jour dans le fichier Excel
+        df.to_excel(file_path, index=False, engine='openpyxl')
+        
+        # Enregistrer l'action dans le journal et afficher un message de succès
+        log_action("Suppression d'une action disciplinaire")
+        flash("Enregistrement supprimé avec succès !", "success")
+        
+        return redirect(url_for('view_registre'))
 
-    # Récupérer l'enregistrement à supprimer basé sur row_id
-    record = df.iloc[row_id].to_dict()
+    # Vérifier si l'index est valide
+    if index < 0 or index >= len(df):
+        flash("Enregistrement non trouvé !", "danger")
+        return redirect(url_for('view_registre'))
+    
+    # Récupérer l'enregistrement à supprimer basé sur l'index
+    record = df.iloc[index].to_dict()
+    return render_template('confirm_delete_registre.html', record=record, index=index)
 
-    return render_template('delete_registre.html', record=record)
+
+
+
 
 @app.route('/import_registre', methods=['GET', 'POST'])
 def import_registre():
@@ -707,8 +718,7 @@ def view_formation():
     df = pd.read_excel(excel_file, engine='openpyxl')
 
     # Traitement des colonnes de date si nécessaire
-    # Exemple : Ajouter des colonnes de date à traiter
-    date_columns = []  # Ajoutez ici les colonnes de date qui doivent être traitées
+    date_columns = []  # Ajoutez ici les colonnes de date à traiter
 
     for col in date_columns:
         if col in df.columns:
@@ -724,7 +734,7 @@ def view_formation():
             data = [row for row in data if search_value.lower() in str(row.get(search_criterion, '')).lower()]
 
     # Pagination
-    page = int(request.args.get('page', 1))  # Numéro de page (défaut à 1)
+    page = int(request.args.get('page', 1))  # Numéro de page (par défaut 1)
     per_page = 20  # Nombre de lignes par page
     total = len(data)
     start = (page - 1) * per_page
@@ -733,13 +743,18 @@ def view_formation():
     paginated_data = data[start:end]
     total_pages = (total + per_page - 1) // per_page  # Calcul du nombre total de pages
 
-    return render_template('view_formation.html',
-                           data=paginated_data,
-                           columns=columns,
-                           page=page,
-                           total_pages=total_pages,
-                           max=max,
-                           min=min)
+    return render_template(
+        'view_formation.html',
+        data=paginated_data,
+        columns=columns,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,  # Ajout du nombre de lignes par page
+        total=total,  # Ajout du nombre total d'enregistrements
+        max=max,
+        min=min
+    )
+
 
 
 COLUMNS = [
@@ -1007,12 +1022,11 @@ SENS_COLUMNS = [
 
 @app.route('/view_sens', methods=['GET', 'POST'])
 def view_sens():
-    excel_file = r'data of pore app\Gestion des sensibilisation (1).xlsx'
+    excel_file = r'data of pore app/Gestion des sensibilisation (1).xlsx'
     df = pd.read_excel(excel_file, engine='openpyxl')
 
     # Traitement des colonnes de date si nécessaire
-    # Exemple : Ajouter des colonnes de date à traiter
-    date_columns = []  # Ajoutez ici les colonnes de date qui doivent être traitées
+    date_columns = []  # Ajoutez ici les colonnes de date à traiter, si besoin
 
     for col in date_columns:
         if col in df.columns:
@@ -1029,21 +1043,29 @@ def view_sens():
 
     # Pagination
     page = int(request.args.get('page', 1))  # Numéro de page (défaut à 1)
-    per_page = 20  # Nombre de lignes par page
+    per_page = 10  # Nombre de lignes par page
     total = len(data)
     start = (page - 1) * per_page
     end = start + per_page
 
     paginated_data = data[start:end]
     total_pages = (total + per_page - 1) // per_page  # Calcul du nombre total de pages
+    
+     # Calculate the range for pagination
+    min_page = max(1, page - 5)
+    max_page = min(total_pages, page + 4)
+    return render_template(
+        'view_sens.html',
+        data=paginated_data,
+        columns=columns,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page, 
+        total=total,
+        max_page=max_page,
+        min_page=min_page 
+    )
 
-    return render_template('view_sens.html',
-                           data=paginated_data,
-                           columns=columns,
-                           page=page,
-                           total_pages=total_pages,
-                           max=max,
-                           min=min)
 
 
 @app.route('/add_sens', methods=['GET', 'POST'])
@@ -1075,22 +1097,33 @@ def update_sens(index):
 
     data = df.iloc[index].to_dict()
     return render_template('update_sens.html', index=index, data=data, columns=SENS_COLUMNS)
-
 @app.route('/confirm_delete_sens/<int:index>', methods=['GET', 'POST'])
 def confirm_delete_sens(index):
+    excel_file = r'data of pore app/Gestion des sensibilisation (1).xlsx'
+
     if request.method == 'POST':
-        excel_file = r'data of pore app\Gestion des sensibilisation (1).xlsx'
-        df = pd.read_excel(excel_file)
+        # Lire le fichier Excel
+        df = pd.read_excel(excel_file, engine='openpyxl')
+        
+        # Supprimer l'enregistrement à l'index spécifié
         df = df.drop(index)
+        
+        # Enregistrer le DataFrame mis à jour dans le fichier Excel
         df.to_excel(excel_file, index=False, engine='openpyxl')
-        log_action("Suppresion d'une sensibilisation")
+        
+        # Enregistrer l'action dans le journal et afficher un message de succès
+        log_action("Suppression d'une sensibilisation")
         flash("Enregistrement supprimé avec succès !", "success")
+        
         return redirect(url_for('view_sens'))
 
-    excel_file = r'data of pore app\Gestion des sensibilisation (1).xlsx'
-    df = pd.read_excel(excel_file)
-    data = df.iloc[index].to_dict()
-    return render_template('confirm_delete_sens.html', data=data, columns=SENS_COLUMNS, index=index)
+    # Lire le fichier Excel pour afficher les détails de l'enregistrement
+    df = pd.read_excel(excel_file, engine='openpyxl')
+    record = df.iloc[index].to_dict()  # Utiliser 'record' ici
+    
+    return render_template('confirm_delete_sens.html', record=record, index=index)
+
+
 
 @app.route('/import_sens', methods=['GET', 'POST'])
 def import_sens():
@@ -1166,6 +1199,7 @@ def import_sens():
 ACC_COLUMNS = [
     'N°', 'MAT', 'CIN', 'Nom', 'Prénom', 'Fonction', 'Affectation', 'date de l\'accident',
     'Nature de lésion', 'Nombre de jours d\'arret',
+    'Date d\'achèvement du certificat initial',
     'Nombre de jours de prolongation 1', 'Date d\'achèvement du certificat de prolongation',
     'Nombre de jours de prolongation 2', 'Date d\'achèvement du certificat de prolongation.1',
     'Nombre de jours prolongation 3', 'Date d\'achèvement du certificat de prolongation.2',
@@ -1180,77 +1214,93 @@ ACC_COLUMNS = [
     'Date de reprise de travail', 'Certificat de guérison', '% d\'incapacité', 'Observations'
 ]
 
-
 @app.route('/view_acc', methods=['GET', 'POST'])
 def view_acc():
     excel_file = 'data of pore app/Accident de travail.xlsx'
     df = pd.read_excel(excel_file, engine='openpyxl')
 
-    # Convertir la colonne 'MAT' en string
-    if 'MAT' in df.columns:
-        df['MAT'] = df['MAT'].astype(str)  # Conversion en string
-
-    # Liste des colonnes de date
+    # Convertir les colonnes de date si nécessaire
     date_columns = [
-        "date de l'accident", "Date d'achèvement du certificat de prolongation",
-        "Date d'achèvement du certificat de prolongation.1",
-        "Date d'achèvement du certificat de prolongation.2",
-        "Date d'achèvement du certificat de prolongation.3",
-        "Date d'achèvement du certificat de prolongation.4",
-        "Date d'achèvement du certificat de prolongation.5",
-        "Date d'achèvement du certificat de prolongation.6",
-        "Date d'achèvement du certificat de prolongation.7",
-        "Date d'achèvement du certificat de prolongation.8",
-        "Date d'achèvement du certificat de prolongation.9",
-        "Date d'achèvement du certificat de prolongation.10",
-        "Date de reprise de travail"
+        "date de l'accident", "Date d'achèvement du certificat initial", "Date d'achèvement du certificat de prolongation",
+                "Date d'achèvement du certificat de prolongation.1",
+                "Date d'achèvement du certificat de prolongation.2",
+                "Date d'achèvement du certificat de prolongation.3",
+                "Date d'achèvement du certificat de prolongation.4",
+                "Date d'achèvement du certificat de prolongation.5",
+                "Date d'achèvement du certificat de prolongation.6",
+                "Date d'achèvement du certificat de prolongation.7",
+                "Date d'achèvement du certificat de prolongation.8",
+                "Date d'achèvement du certificat de prolongation.9",
+                "Date d'achèvement du certificat de prolongation.10",
+                "Date de reprise de travail"
     ]
 
-    # Convertir les colonnes de date au format string 'YYYY-MM-DD'
-    for col in date_columns:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%Y-%m-%d')
-
-    # Traitement de la recherche
-    search_criterion = request.form.get('search_criterion')
-    search_value = request.form.get('search_value')
-    if search_criterion and search_value:
-        df = df[df[search_criterion].astype(str).str.contains(search_value, case=False, na=False)]
+    
 
     columns = df.columns.tolist()
     data = df.to_dict(orient='records')
 
+    if request.method == 'POST':
+        search_criterion = request.form.get('search_criterion')
+        search_value = request.form.get('search_value')
+        if search_criterion and search_value:
+            data = [row for row in data if search_value.lower() in str(row.get(search_criterion, '')).lower()]
+
     # Pagination
-    total_records = len(data)
-    page = request.args.get('page', 1, type=int)
-    page_size = 10  # Définissez votre taille de page ici
-    total_pages = (total_records + page_size - 1) // page_size  # Calcul du nombre total de pages
+    page = int(request.args.get('page', 1))  # Numéro de page (défaut à 1)
+    per_page = 10  # Nombre de lignes par page
+    total = len(data)
+    start = (page - 1) * per_page
+    end = start + per_page
 
-    start_index = (page - 1) * page_size
-    end_index = min(page * page_size, total_records)
+    paginated_data = data[start:end]
+    total_pages = (total + per_page - 1) // per_page  # Calcul du nombre total de pages
 
-    # Calculate pagination limits for the template
-    pagination_start = max(1, page - 5)
-    pagination_end = min(total_pages, page + 4)
+    return render_template(
+        'view_acc.html',
+        data=paginated_data,
+        columns=columns,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,
+        total=total, 
+        max=max,
+        min=min
+    )
 
-    return render_template('view_acc.html', data=data[start_index:end_index], columns=columns,
-                           total_records=total_records, page=page, page_size=page_size,
-                           total_pages=total_pages, start_index=start_index, end_index=end_index,
-                           pagination_start=pagination_start, pagination_end=pagination_end)
-
-
+date_columns = [
+    "date de l'accident", "Date d'achèvement du certificat initial","Date d'achèvement du certificat de prolongation",
+    "Date d'achèvement du certificat de prolongation.1",
+    "Date d'achèvement du certificat de prolongation.2",
+    "Date d'achèvement du certificat de prolongation.3",
+    "Date d'achèvement du certificat de prolongation.4",
+    "Date d'achèvement du certificat de prolongation.5",
+    "Date d'achèvement du certificat de prolongation.6",
+    "Date d'achèvement du certificat de prolongation.7",
+    "Date d'achèvement du certificat de prolongation.8",
+    "Date d'achèvement du certificat de prolongation.9",
+    "Date d'achèvement du certificat de prolongation.10",
+    "Date de reprise de travail"
+]
 
 @app.route('/add_acc', methods=['GET', 'POST'])
 def add_acc():
     if request.method == 'POST':
         new_entry = {col: request.form.get(col, '') for col in ACC_COLUMNS}
+        
+        # Convertir les colonnes de date
+        for col in date_columns:
+            if col in new_entry and new_entry[col]:
+                new_entry[col] = pd.to_datetime(new_entry[col], format='%Y-%m-%d', errors='coerce').strftime('%Y-%m-%d')
+
         df = pd.read_excel('data of pore app/Accident de travail.xlsx', engine='openpyxl')
         df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
         df.to_excel('data of pore app/Accident de travail.xlsx', index=False, engine='openpyxl')
         log_action("Ajout d'un accident de travail")
         flash("Enregistrement ajouté avec succès !", "success")
         return redirect(url_for('view_acc'))
-    return render_template('add_acc.html', columns=ACC_COLUMNS)
+    
+    return render_template('add_acc.html', columns=ACC_COLUMNS, date_columns=date_columns)
 
 @app.route('/update_acc/<int:index>', methods=['GET', 'POST'])
 def update_acc(index):
@@ -1259,14 +1309,18 @@ def update_acc(index):
 
     if request.method == 'POST':
         for col in ACC_COLUMNS:
-            df.at[index, col] = request.form.get(col, '')
+            value = request.form.get(col, '')
+            if col in date_columns and value:
+                value = pd.to_datetime(value, format='%Y-%m-%d', errors='coerce').strftime('%Y-%m-%d')
+            df.at[index, col] = value
+        
         df.to_excel(excel_file, index=False, engine='openpyxl')
-        log_action("Mise à jour de Accident de travail")
+        log_action("Mise à jour de l'accident de travail")
         flash("Enregistrement mis à jour avec succès !", "success")
         return redirect(url_for('view_acc'))
 
     data = df.iloc[index].to_dict()
-    return render_template('update_acc.html', index=index, data=data, columns=ACC_COLUMNS)
+    return render_template('update_acc.html', index=index, data=data, columns=ACC_COLUMNS, date_columns=date_columns)
 
 @app.route('/confirm_delete_acc/<int:index>', methods=['GET', 'POST'])
 def confirm_delete_acc(index):
@@ -1352,13 +1406,10 @@ def import_acc():
 DISCIPLINE_COLUMNS = [
     'MAT', 'CIN', 'Emetteur', 'Violateur', 'Fonction', 'Date', 'Organisme', 'Motif de sanction 1', 'Type de sanction 1', 'Motif de sanction 2', 'Type de sanction 2', 'Motif de sanction 3', 'Type de sanction 3', 'Observations'
 ]
-
 @app.route('/view_discipline', methods=['GET', 'POST'])
 def view_discipline():
     excel_file = 'data of pore app/Suivi des mesures disciplinaires.xlsx'
     df = pd.read_excel(excel_file, engine='openpyxl')
-
-      # Convertir en entier, avec gestion des erreurs
 
     # Convertir la colonne de date au format string 'YYYY-MM-DD'
     if 'Date' in df.columns:
@@ -1384,8 +1435,9 @@ def view_discipline():
     paginated_data = data[start:end]
     total_pages = (total + per_page - 1) // per_page  # Calcul du nombre total de pages
 
-    # Sauvegarder les modifications dans le fichier Excel
-    df.to_excel(excel_file, index=False, engine='openpyxl')
+    # Calculer les pages minimales et maximales pour la pagination
+    min_page = max(1, page - 5)
+    max_page = min(total_pages, page + 4)
 
     return render_template(
         'view_discipline.html',
@@ -1393,9 +1445,12 @@ def view_discipline():
         columns=columns,
         page=page,
         total_pages=total_pages,
-        max=max,
-        min=min
+        per_page=per_page,
+        total=total,
+        min_page=min_page,
+        max_page=max_page
     )
+
 
 @app.route('/add_discipline', methods=['GET', 'POST'])
 def add_discipline():
@@ -1548,26 +1603,29 @@ def download_habilitation_excel():
 
 @app.route('/view_habilitation', methods=['GET', 'POST'])
 def view_habilitation():
-    habilitation_excel_file = 'data of pore app\Habilitation.xlsx'  # Assurez-vous que cette variable est définie correctement
+    habilitation_excel_file = 'data of pore app\Habilitation.xlsx'  # Assurez-vous que ce chemin est correct
     df = pd.read_excel(habilitation_excel_file, engine='openpyxl')
 
+    # Liste des colonnes de date
     date_columns = [
-        'Date date de délivrance 1', 'Date d\'expiration 1',
-        'Date date de délivrance 2', 'Date d\'expiration 2',
-        'Date date de délivrance 3', 'Date d\'expiration 3'
+        'Date de délivrance 1', 'Date d\'expiration 1',
+        'Date de délivrance 2', 'Date d\'expiration 2',
+        'Date de délivrance 3', 'Date d\'expiration 3'
     ]
 
+    # Convertir les colonnes de date en datetime et formater
     for col in date_columns:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
-            df[col] = df[col].apply(lambda x: '' if pd.isna(x) else x.strftime('%Y-%m-%d'))
+            df[col] = df[col].apply(lambda x: '' if pd.isna(x) else x.strftime('%d/%m/%Y'))
 
     columns = df.columns.tolist()
     data = df.to_dict(orient='records')
 
+    # Recherche
     if request.method == 'POST':
         search_criterion = request.form.get('search_criterion')
-        search_value = request.form.get('search_value')
+        search_value = request.form.get('search_value', '').strip()
         if search_criterion and search_value:
             data = [row for row in data if search_value.lower() in str(row.get(search_criterion, '')).lower()]
 
@@ -1581,14 +1639,14 @@ def view_habilitation():
     paginated_data = data[start:end]
     total_pages = (total + per_page - 1) // per_page  # Calcul du nombre total de pages
 
-    df.to_excel(habilitation_excel_file, index=False, engine='openpyxl')
-
     return render_template(
         'view_habilitation.html',
         data=paginated_data,
         columns=columns,
         page=page,
         total_pages=total_pages,
+        per_page=per_page,
+        total=total,
         max=max,
         min=min
     )
@@ -1709,44 +1767,27 @@ def download_visite_medicale_excel():
         return send_file(excel_filename, as_attachment=True)
     else:
         return "Aucune donnée disponible dans le fichier Excel."
-
 @app.route('/view_visite_medicale', methods=['GET', 'POST'])
 def view_visite_medicale():
-    visite_medicale_excel_file = 'data of pore app\Suivi-des-visites-médicales.xlsx'
+    visite_medicale_excel_file = 'data of pore app\Suivi-des-visites-médicales.xlsx'  # Assurez-vous que ce chemin est correct
     df = pd.read_excel(visite_medicale_excel_file, engine='openpyxl')
 
-    # Nettoyer les colonnes en supprimant les espaces supplémentaires
-    df.columns = df.columns.str.strip()
-    # Convertir le matricule en string
-    df['MAT'] = df['MAT'].astype(str)  # Remplacez 'MAT' par le nom exact de votre colonne
+    # Liste des colonnes de date (ajustez selon votre fichier)
+    date_columns = ['Date de Visite', 'Date de Suivi']  # Exemple de colonnes de dates
 
-
-    # Vérifier s'il y a des colonnes en double
-    duplicates = df.columns[df.columns.duplicated()]
-    if not duplicates.empty:
-        print(f"Doublons trouvés dans les colonnes: {list(duplicates)}")
-        df = df.loc[:, ~df.columns.duplicated()]  # Supprime les doublons de colonnes
-
-    # Colonnes contenant des dates
-    date_columns = [
-        'DATE DE NAISSANCE', 'DATE D\'EMBAUCHE', 
-        'DATE DERNIÈRE VISITE', 'Date Viste programmée', 
-        'Date de visite médicale 2'
-    ]
-
+    # Convertir les colonnes de date en datetime et formater
     for col in date_columns:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
-            df[col] = df[col].apply(lambda x: '' if pd.isna(x) else x.strftime('%Y-%m-%d'))
-        else:
-            print(f"La colonne {col} n'existe pas dans le fichier Excel.")
+            df[col] = df[col].apply(lambda x: '' if pd.isna(x) else x.strftime('%d/%m/%Y'))
 
     columns = df.columns.tolist()
     data = df.to_dict(orient='records')
 
+    # Recherche
     if request.method == 'POST':
         search_criterion = request.form.get('search_criterion')
-        search_value = request.form.get('search_value')
+        search_value = request.form.get('search_value', '').strip()
         if search_criterion and search_value:
             data = [row for row in data if search_value.lower() in str(row.get(search_criterion, '')).lower()]
 
@@ -1766,6 +1807,8 @@ def view_visite_medicale():
         columns=columns,
         page=page,
         total_pages=total_pages,
+        per_page=per_page,  # Ajouter per_page ici
+        total=total,  # Ajouter total ici
         max=max,
         min=min
     )
@@ -2063,34 +2106,25 @@ def download_recompense_excel():
 
 @app.route('/view_recompense', methods=['GET', 'POST'])
 def view_recompense():
+    recompense_excel_file = 'data of pore app\Systeme de recompense.xlsx'  # Assurez-vous que ce chemin est correct
     df = pd.read_excel(recompense_excel_file, engine='openpyxl')
 
-    # Nettoyer les colonnes en supprimant les espaces supplémentaires
-    df.columns = df.columns.str.strip()
-    df['MAT'] = df['MAT'].astype(str)  # Assurez-vous que 'MAT' est bien le nom exact de votre colonne
+    # Liste des colonnes de date spécifiques aux récompenses (ajustez en fonction de votre fichier)
+    date_columns = ['Date de la récompense', 'Date de remise']
 
-    # Vérifier s'il y a des colonnes en double
-    duplicates = df.columns[df.columns.duplicated()]
-    if not duplicates.empty:
-        print(f"Doublons trouvés dans les colonnes: {list(duplicates)}")
-        df = df.loc[:, ~df.columns.duplicated()]  # Supprime les doublons de colonnes
-
-    # Colonnes contenant des dates
-    date_columns = ['Date']
-
+    # Convertir les colonnes de date en datetime et formater
     for col in date_columns:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
-            df[col] = df[col].apply(lambda x: '' if pd.isna(x) else x.strftime('%Y-%m-%d'))
-        else:
-            print(f"La colonne {col} n'existe pas dans le fichier Excel.")
+            df[col] = df[col].apply(lambda x: '' if pd.isna(x) else x.strftime('%d/%m/%Y'))
 
     columns = df.columns.tolist()
     data = df.to_dict(orient='records')
 
+    # Recherche
     if request.method == 'POST':
         search_criterion = request.form.get('search_criterion')
-        search_value = request.form.get('search_value')
+        search_value = request.form.get('search_value', '').strip()
         if search_criterion and search_value:
             data = [row for row in data if search_value.lower() in str(row.get(search_criterion, '')).lower()]
 
@@ -2110,6 +2144,8 @@ def view_recompense():
         columns=columns,
         page=page,
         total_pages=total_pages,
+        per_page=per_page,
+        total=total,
         max=max,
         min=min
     )
@@ -2193,6 +2229,143 @@ def import_recompense():
     return render_template('import_recompense.html')
 
 
+@app.route('/view_infirmerie', methods=['GET', 'POST'])
+def view_infirmerie():
+    infirmerie_excel_file = r'data of pore app\Suivi de passage a l infermerie.xlsx'  # Assurez-vous que ce chemin est correct
+    df = pd.read_excel(infirmerie_excel_file, engine='openpyxl')
+
+    # Liste des colonnes de date spécifiques au fichier de suivi de passage à l'infirmerie
+    date_columns = ['Date']
+
+    # Convertir les colonnes de date en datetime et formater
+    for col in date_columns:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+            df[col] = df[col].apply(lambda x: '' if pd.isna(x) else x.strftime('%d/%m/%Y'))
+
+    columns = df.columns.tolist()
+    data = df.to_dict(orient='records')
+
+    # Recherche
+    if request.method == 'POST':
+        search_criterion = request.form.get('search_criterion')
+        search_value = request.form.get('search_value', '').strip()
+        if search_criterion and search_value:
+            data = [row for row in data if search_value.lower() in str(row.get(search_criterion, '')).lower()]
+
+    # Pagination
+    page = int(request.args.get('page', 1))  # Numéro de page (défaut à 1)
+    per_page = 10  # Nombre de lignes par page
+    total = len(data)
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    paginated_data = data[start:end]
+    total_pages = (total + per_page - 1) // per_page  # Calcul du nombre total de pages
+
+    return render_template(
+        'view_infirmerie.html',
+        data=paginated_data,
+        columns=columns,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,
+        total=total,
+        max=max,
+        min=min
+    )
+
+INFIRMERIE_COLUMNS = ['MAT', 'CIN', 'Nom', 'Prenom', 'Fonction', 'Date', 'Type de passage à l\'infirmerie', 'Motif de passage à l\'infirmerie', 'Observations']
+infirmerie_excel_file = r'data of pore app\Suivi de passage a l infermerie.xlsx'
+@app.route('/add_infirmerie', methods=['GET', 'POST'])
+def add_infirmerie():
+    if request.method == 'POST':
+        new_entry = {col: request.form.get(col, '') for col in INFIRMERIE_COLUMNS}
+        df = pd.read_excel(infirmerie_excel_file, engine='openpyxl')
+        df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
+        df.to_excel(infirmerie_excel_file, index=False, engine='openpyxl')
+        log_action("Ajout d'un nouveau passage à l'infirmerie")
+        flash("Enregistrement ajouté avec succès !", "success")
+        return redirect(url_for('view_infirmerie'))
+    return render_template('add_infirmerie.html', columns=INFIRMERIE_COLUMNS)
+
+@app.route('/update_infirmerie/<int:index>', methods=['GET', 'POST'])
+def update_infirmerie(index):
+    df = pd.read_excel(infirmerie_excel_file, engine='openpyxl')
+    if request.method == 'POST':
+        for col in INFIRMERIE_COLUMNS:
+            df.at[index, col] = request.form.get(col, '')
+        df.to_excel(infirmerie_excel_file, index=False, engine='openpyxl')
+        log_action("Mise à jour d'un passage à l'infirmerie")
+        flash("Enregistrement mis à jour avec succès !", "success")
+        return redirect(url_for('view_infirmerie'))
+    data = df.iloc[index].to_dict()
+    return render_template('update_infirmerie.html', index=index, data=data, columns=INFIRMERIE_COLUMNS)
+
+@app.route('/confirm_delete_infirmerie/<int:index>', methods=['GET', 'POST'])
+def confirm_delete_infirmerie(index):
+    if request.method == 'POST':
+        df = pd.read_excel(infirmerie_excel_file, engine='openpyxl')
+        df = df.drop(index)
+        df.to_excel(infirmerie_excel_file, index=False, engine='openpyxl')
+        log_action("Suppression d'un passage à l'infirmerie")
+        flash("Enregistrement supprimé avec succès !", "success")
+        return redirect(url_for('view_infirmerie'))
+    df = pd.read_excel(infirmerie_excel_file, engine='openpyxl')
+    data = df.iloc[index].to_dict()
+    return render_template('confirm_delete_infirmerie.html', data=data, columns=INFIRMERIE_COLUMNS, index=index)
+
+@app.route('/import_infirmerie', methods=['GET', 'POST'])
+def import_infirmerie():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+            date_columns = ['Date']
+            if file.filename.endswith('.xlsx'):
+                engine = 'openpyxl'
+            elif file.filename.endswith('.xls'):
+                engine = 'xlrd'
+            
+            df_new = pd.read_excel(file, engine=engine)
+            df_existing = pd.read_excel(infirmerie_excel_file, engine='openpyxl')
+
+            if set(df_new.columns) == set(df_existing.columns):
+                for col in date_columns:
+                    if col in df_new.columns:
+                        df_new[col] = pd.to_datetime(df_new[col], errors='coerce', dayfirst=True)
+                    if col in df_existing.columns:
+                        df_existing[col] = pd.to_datetime(df_existing[col], errors='coerce', dayfirst=True)
+
+                for col in date_columns:
+                    if col in df_new.columns:
+                        df_new[col] = df_new[col].fillna('').apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) else '')
+                    if col in df_existing.columns:
+                        df_existing[col] = df_existing[col].fillna('').apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) else '')
+
+                df_combined = pd.concat([df_existing, df_new]).drop_duplicates().reset_index(drop=True)
+                df_combined.to_excel(infirmerie_excel_file, index=False, engine='openpyxl')
+                log_action("Importation de nouveau passage à l'infirmerie")
+                flash("Fichier importé et fusionné avec succès !", "success")
+            else:
+                flash("Les colonnes du fichier importé ne correspondent pas au tableau existant.", "danger")
+        else:
+            flash("Veuillez télécharger un fichier Excel valide (.xlsx ou .xls).", "danger")
+
+        return redirect(url_for('view_infirmerie'))
+    
+    return render_template('import_infirmerie.html')
+
+@app.route('/download/infirmerie_excel')
+def download_infirmerie_excel():
+    df = pd.read_excel(infirmerie_excel_file, engine='openpyxl')
+    if not df.empty:
+        excel_filename = 'suivi_infirmerie.xlsx'
+        df.to_excel(excel_filename, index=False)
+        return send_file(excel_filename, as_attachment=True)
+    else:
+        return "Aucune donnée disponible dans le fichier Excel."
+
+
 
 import re
 
@@ -2205,15 +2378,15 @@ def extract_number_from_string(s):
     return 0
 
 # Chemins vers les fichiers Excel
-EPI_FILE = 'data of pore app/suivi de remise des EPI Finale.xlsx'
-FORMATION_FILE = 'data of pore app/fiche formation finale.xlsx'
-SENS_FILE = 'data of pore app/Gestion des sensibilisation (1).xlsx'
-DISCIPLINARY_FILE = 'data of pore app/Registre du suivi des actions disciplinaires.xlsx'
-ACCIDENT_FILE = 'data of pore app/Accident de travail.xlsx'
-HABILITATION_FILE = 'data of pore app/Habilitation.xlsx'
-DISCIPLINE_FILE = 'data of pore app/Suivi des mesures disciplinaires.xlsx'
-VISITE_MEDICALE_FILE = 'data of pore app/Suivi-des-visites-médicales.xlsx'
-
+EPI_FILE = r'data of pore app\suivi de remise des EPI Finale.xlsx'
+FORMATION_FILE = r'data of pore app\fiche formation finale.xlsx'
+SENS_FILE = r'data of pore app\Gestion des sensibilisation (1).xlsx'
+DISCIPLINARY_FILE = r'data of pore app\Registre du suivi des actions disciplinaires.xlsx'
+ACCIDENT_FILE = r'data of pore app\Accident de travail.xlsx'
+HABILITATION_FILE = r'data of pore app\Habilitation.xlsx'
+DISCIPLINE_FILE = r'data of pore app\Suivi des mesures disciplinaires.xlsx'
+VISITE_MEDICALE_FILE = r'data of pore app\Suivi-des-visites-médicales.xlsx' 
+recompense_excel_file = r'data of pore app/Systeme de recompense.xlsx'
 # Charger les fichiers Excel
 dataframes = {}
 
@@ -2225,7 +2398,8 @@ file_paths = {
     'accident': ACCIDENT_FILE,
     'habilitation': HABILITATION_FILE,
     'discipline' : DISCIPLINE_FILE,
-    'visite_medicale': VISITE_MEDICALE_FILE 
+    'visite_medicale': VISITE_MEDICALE_FILE,
+    'recompense': recompense_excel_file
 }
 
 for key, path in file_paths.items():
@@ -2288,65 +2462,66 @@ def get_employee_info(mat):
     ]
 
     formation_details_columns = [
-          'AFFEECTATION', 'MAT', 'NOM ET PRENOM', 'FONCTION', 'CIN', 'D EMBAUCHE', 'SECTION',
-    'Formation sur prévention des risques électriques: Nombre', 'Formation sur prévention des risques électriques: Date',
-    'Formation sur les techniques d\'elingage en sécurité: Nombre', 'Formation sur les techniques d\'elingage en sécurité: Date',
-    'Formation sur les travaux en hauteur: Nombre', 'Formation sur les travaux en hauteur: Date',
-    'Formation sur les travaux offshores: Nombre', 'Formation sur les travaux offshores: Date',
-    'Formation sur des signaleurs: Nombre', 'Formation sur des signaleurs: Date',
-    'Formation sur la conduite en sécurité sur chantier: Nombre', 'Formation sur la conduite en sécurité sur chantier: Date',
-    'Formation sur les équipements mobiles et circulation: Nombre', 'Formation sur les équipements mobiles et circulation: Date',
-    'Formation sur l\'usage sécuritaire de l\'échafaudage: Nombre', 'Formation sur l\'usage sécuritaire de l\'échafaudage: Date',
-    'Formation sur le respect du 5S: Nombre', 'Formation sur le respect du 5S: Date',
-    'Formation sur la necessité du vigilence et port des EPI: Nombre', 'Formation sur la necessité du vigilence et port des EPI: Date',
-    'Formation sur la prévention des risques des travaux maritimes: Nombre', 'Formation sur la prévention des risques des travaux maritimes: Date',
-    'Formation sur les travaux à proximité de l\'eau / la mer: Nombre', 'Formation sur les travaux à proximité de l\'eau / la mer: Date',
-    'Formation sur la prévention les risques des travaux ferraillage: Nombre', 'Formation sur la prévention les risques des travaux ferraillage: Date',
-    'Formation sur l\'intervention sécuritaire en espace confiné: Nombre', 'Formation sur l\'intervention sécuritaire en espace confiné: Date',
-    'Formation sur la consignation-déconsignation: Nombre', 'Formation sur la consignation-déconsignation: Date',
-    'Formation sur les risques liés aux opération de levage: Nombre', 'Formation sur les risques liés aux opération de levage: Date',
-    'Formation sur le sauvetage-secourisme au travail: Nombre', 'Formation sur le sauvetage-secourisme au travail: Date',
-    'Formation sur la prévention des risques liées au chargement et déchargement des tubes métallique: Nombre', 'Formation sur la prévention des risques liées au chargement et déchargement des tubes métallique: Date',
-    'Formation sur l\'usage sécuritaire des appareils électroportatifs.(HILTI): Nombre', 'Formation sur l\'usage sécuritaire des appareils électroportatifs.(HILTI): Date',
-    'Formation sur les risques du démontage de la structure méttalique: Nombre', 'Formation sur les risques du démontage de la structure méttalique: Date',
-    'Formation incendie: Nombre', 'Formation incendie: Date',
-    'Formation sur les gestes du guidages: Nombre', 'Formation sur les gestes du guidages: Date',
-    'Formation sur prévention de noyad: Nombre', 'Formation sur prévention de noyad: Date',
-    'Formation sur la gestion du stress au travail: Nombre', 'Formation sur la gestion du stress au travail: Date',
-    'Formation sur les risques liés au démontage de la charpente métallique: Nombre', 'Formation sur les risques liés au démontage de la charpente métallique: Date',
-    'Formation sur l\'inspection des amoires électrique: Nombre', 'Formation sur l\'inspection des amoires électrique: Date',
-    'Formation sur procédure de plongée: Nombre', 'Formation sur procédure de plongée: Date',
-    'Techniques d\'élingage-désélingage / mantaention manuelle PRATIQUE: Nombre', 'Techniques d\'élingage-désélingage / mantaention manuelle PRATIQUE: Date',
-    'Formation sur les gestes et postures: Nombre', 'Formation sur les gestes et postures: Date',
-    'Formation sur les gestes et postures PRATIQUE: Nombre', 'Formation sur les gestes et postures PRATIQUE: Date',
-    'formation sur eagle eyes: Nombre', 'formation sur eagle eyes: Date',
-    'Formation sur la gestion des déchets: Nombre', 'Formation sur la gestion des déchets: Date',
-    'Formation sur la conduite à tenir en cas de déversement accidentel: Nombre', 'Formation sur la conduite à tenir en cas de déversement accidentel: Date',
-    'Formation sur la conduite à tenir en cas de déversement accidentel /PRATIQUE/: Nombre', 'Formation sur la conduite à tenir en cas de déversement accidentel /PRATIQUE/: Date',
-    'Formation sur incidents environnementaux: Nombre', 'Formation sur incidents environnementaux: Date',
-    'Formation sur les risques environnementaux: Nombre', 'Formation sur les risques environnementaux: Date',
-    'Formation les risqus des poussiéres: Nombre', 'Formation les risqus des poussiéres: Date',
-    'Formation sur produits chimiques et pictogrammes de dangers: Nombre', 'Formation sur produits chimiques et pictogrammes de dangers: Date',
-    'Formation sur la procédure de gestion des matiéres dangereuses: Nombre', 'Formation sur la procédure de gestion des matiéres dangereuses: Date',
-    'Formation sur gestes et postures au travail - manutention manvelle: Nombre', 'Formation sur gestes et postures au travail - manutention manvelle: Date',
-    'Formation sur l\'usage de bouée sauvetage: Nombre', 'Formation sur l\'usage de bouée sauvetage: Date',
-    'Formation sur les équipements mobiles et circulation-la conduite en sécurite sur chantier(CHAUFFEUR): Nombre', 'Formation sur les équipements mobiles et circulation-la conduite en sécurite sur chantier(CHAUFFEUR): Date',
-    'Formation sur les risques liés aux travaux de sablage: Nombre', 'Formation sur les risques liés aux travaux de sablage: Date',
-    'Formation de sécourisme au travail: Nombre', 'Formation de sécourisme au travail: Date',
-    'Formation sur les mettodes et techniques utilisation des accesoires de sauvetage: Nombre', 'Formation sur les mettodes et techniques utilisation des accesoires de sauvetage: Date',
-    'Formation sur l\'usage sécuritaire des appareils électroportatifs: Nombre', 'Formation sur l\'usage sécuritaire des appareils électroportatifs: Date',
-    'Formation sur l\'usage sécuritaire de l\'échafaudage: Nombre', 'Formation sur l\'usage sécuritaire de l\'échafaudage: Date',
-    'Formation sur l\'inspection des amoires électrique: Nombre.1', 'Formation sur l\'inspection des amoires électrique: Date.1',
-    'Formation sur l\'inspection des amoires électrique: Nombre.2', 'Formation sur l\'inspection des amoires électrique: Date.2',
-    'Formation sur mesures de sécurité: équipage mobile- démarrage TCO: Nombre', 'Formation sur mesures de sécurité: équipage mobile- démarrage TCO: Date',
-    'Formation sur les risques et méthodes de prevention liees au travaux d\'amarrage et traction par treuil: Nombre', 'Formation sur les risques et méthodes de prevention liees au travaux d\'amarrage et traction par treuil: Date',
-    'Formation sur inspection et usage du gilet de sauvetage : Nombre', 'Formation sur inspection et usage du gilet de sauvetage : Date',
-    'Formation sur les techniques d\'embarquement et debarquement: Nombre', 'Formation sur les techniques d\'embarquement et debarquement: Date',
-    'Formation sur la prevention des risques liés à l\'exposition au bruit: Nombre', 'Formation sur la prevention des risques liés à l\'exposition au bruit: Date',
-    'Formation sur les risques existant à la CAB : nombre', 'Formation sur les risques existant à la CAB : Date',
-    'Formation sur le sauvetage-secourisme au travail.(C R ): Nombre', 'Formation sur le sauvetage-secourisme au travail.(C R ): Date',
-    'Formation sur equipements de sauvetage maritimes: Nombre', 'Formation sur equipements de sauvetage maritimes: Date'
+    'AFFEECTATION', 'MAT', 'NOM ET PRENOM', 'FONCTION', 'CIN', 'D EMBAUCHE', 'SECTION',
+                'Formation sur prévention des risques électriques: Nombre', 'Formation sur prévention des risques électriques: Date',
+                'Formation sur les techniques d\'elingage en sécurité: Nombre', 'Formation sur les techniques d\'elingage en sécurité: Date',
+                'Formation sur les travaux en hauteur: Nombre', 'Formation sur les travaux en hauteur: Date',
+                'Formation sur les travaux offshores: Nombre', 'Formation sur les travaux offshores: Date',
+                'Formation sur des signaleurs: Nombre', 'Formation sur des signaleurs: Date',
+                'Formation sur la conduite en sécurité sur chantier: Nombre', 'Formation sur la conduite en sécurité sur chantier: Date',
+                'Formation sur les équipements mobiles et circulation: Nombre', 'Formation sur les équipements mobiles et circulation: Date',
+                'Formation sur l\'usage sécuritaire de l\'échafaudage: Nombre', 'Formation sur l\'usage sécuritaire de l\'échafaudage: Date',
+                'Formation sur le respect du 5S: Nombre', 'Formation sur le respect du 5S: Date',
+                'Formation sur la necessité du vigilence et port des EPI: Nombre', 'Formation sur la necessité du vigilence et port des EPI: Date',
+                'Formation sur la prévention des risques des travaux maritimes: Nombre', 'Formation sur la prévention des risques des travaux maritimes: Date',
+                'Formation sur les travaux à proximité de l\'eau / la mer: Nombre', 'Formation sur les travaux à proximité de l\'eau / la mer: Date',
+                'Formation sur la prévention les risques des travaux ferraillage: Nombre', 'Formation sur la prévention les risques des travaux ferraillage: Date',
+                'Formation sur l\'intervention sécuritaire en espace confiné: Nombre', 'Formation sur l\'intervention sécuritaire en espace confiné: Date',
+                'Formation sur la consignation-déconsignation: Nombre', 'Formation sur la consignation-déconsignation: Date',
+                'Formation sur les risques liés aux opération de levage: Nombre', 'Formation sur les risques liés aux opération de levage: Date',
+                'Formation sur le sauvetage-secourisme au travail: Nombre', 'Formation sur le sauvetage-secourisme au travail: Date',
+                'Formation sur la prévention des risques liées au chargement et déchargement des tubes métallique: Nombre', 'Formation sur la prévention des risques liées au chargement et déchargement des tubes métallique: Date',
+                'Formation sur l\'usage sécuritaire des appareils électroportatifs.(HILTI): Nombre', 'Formation sur l\'usage sécuritaire des appareils électroportatifs.(HILTI): Date',
+                'Formation sur les risques du démontage de la structure méttalique: Nombre', 'Formation sur les risques du démontage de la structure méttalique: Date',
+                'Formation incendie: Nombre', 'Formation incendie: Date',
+                'Formation sur les gestes du guidages: Nombre', 'Formation sur les gestes du guidages: Date',
+                'Formation sur prévention de noyad: Nombre', 'Formation sur prévention de noyad: Date',
+                'Formation sur la gestion du stress au travail: Nombre', 'Formation sur la gestion du stress au travail: Date',
+                'Formation sur les risques liés au démontage de la charpente métallique: Nombre', 'Formation sur les risques liés au démontage de la charpente métallique: Date',
+                'Formation sur l\'inspection des amoires électrique: Nombre', 'Formation sur l\'inspection des amoires électrique: Date',
+                'Formation sur procédure de plongée: Nombre', 'Formation sur procédure de plongée: Date',
+                'Techniques d\'élingage-désélingage / mantaention manuelle PRATIQUE: Nombre', 'Techniques d\'élingage-désélingage / mantaention manuelle PRATIQUE: Date',
+                'Formation sur les gestes et postures: Nombre', 'Formation sur les gestes et postures: Date',
+                'Formation sur les gestes et postures PRATIQUE: Nombre', 'Formation sur les gestes et postures PRATIQUE: Date',
+                'formation sur eagle eyes: Nombre', 'formation sur eagle eyes: Date',
+                'Formation sur la gestion des déchets: Nombre', 'Formation sur la gestion des déchets: Date',
+                'Formation sur la conduite à tenir en cas de déversement accidentel: Nombre', 'Formation sur la conduite à tenir en cas de déversement accidentel: Date',
+                'Formation sur la conduite à tenir en cas de déversement accidentel /PRATIQUE/: Nombre', 'Formation sur la conduite à tenir en cas de déversement accidentel /PRATIQUE/: Date',
+                'Formation sur incidents environnementaux: Nombre', 'Formation sur incidents environnementaux: Date',
+                'Formation sur les risques environnementaux: Nombre', 'Formation sur les risques environnementaux: Date',
+                'Formation les risqus des poussiéres: Nombre', 'Formation les risqus des poussiéres: Date',
+                'Formation sur produits chimiques et pictogrammes de dangers: Nombre', 'Formation sur produits chimiques et pictogrammes de dangers: Date',
+                'Formation sur la procédure de gestion des matiéres dangereuses: Nombre', 'Formation sur la procédure de gestion des matiéres dangereuses: Date',
+                'Formation sur gestes et postures au travail - manutention manvelle: Nombre', 'Formation sur gestes et postures au travail - manutention manvelle: Date',
+                'Formation sur l\'usage de bouée sauvetage: Nombre', 'Formation sur l\'usage de bouée sauvetage: Date',
+                'Formation sur les équipements mobiles et circulation-la conduite en sécurite sur chantier(CHAUFFEUR): Nombre', 'Formation sur les équipements mobiles et circulation-la conduite en sécurite sur chantier(CHAUFFEUR): Date',
+                'Formation sur les risques liés aux travaux de sablage: Nombre', 'Formation sur les risques liés aux travaux de sablage: Date',
+                'Formation de sécourisme au travail: Nombre', 'Formation de sécourisme au travail: Date',
+                'Formation sur les mettodes et techniques utilisation des accesoires de sauvetage: Nombre', 'Formation sur les mettodes et techniques utilisation des accesoires de sauvetage: Date',
+                'Formation sur l\'usage sécuritaire des appareils électroportatifs: Nombre', 'Formation sur l\'usage sécuritaire des appareils électroportatifs: Date',
+                'Formation sur l\'usage sécuritaire de l\'échafaudage: Nombre', 'Formation sur l\'usage sécuritaire de l\'échafaudage: Date',
+                'Formation sur l\'inspection des amoires électrique: Nombre.1', 'Formation sur l\'inspection des amoires électrique: Date.1',
+                'Formation sur l\'inspection des amoires électrique: Nombre.2', 'Formation sur l\'inspection des amoires électrique: Date.2',
+                'Formation sur mesures de sécurité: équipage mobile- démarrage TCO: Nombre', 'Formation sur mesures de sécurité: équipage mobile- démarrage TCO: Date',
+                'Formation sur les risques et méthodes de prevention liees au travaux d\'amarrage et traction par treuil: Nombre', 'Formation sur les risques et méthodes de prevention liees au travaux d\'amarrage et traction par treuil: Date',
+                'Formation sur inspection et usage du gilet de sauvetage : Nombre', 'Formation sur inspection et usage du gilet de sauvetage : Date',
+                'Formation sur les techniques d\'embarquement et debarquement: Nombre', 'Formation sur les techniques d\'embarquement et debarquement: Date',
+                'Formation sur la prevention des risques liés à l\'exposition au bruit: Nombre', 'Formation sur la prevention des risques liés à l\'exposition au bruit: Date',
+                'Formation sur les risques existant à la CAB : nombre', 'Formation sur les risques existant à la CAB : Date',
+                'Formation sur le sauvetage-secourisme au travail.(C R ): Nombre', 'Formation sur le sauvetage-secourisme au travail.(C R ): Date',
+                'Formation sur equipements de sauvetage maritimes: Nombre', 'Formation sur equipements de sauvetage maritimes: Date'
     ]
+
     
     disciplinary_details_columns = [
         'Date', 'Emetteur', 'Violateur', 'Fonction', 'MAT', 'Zone d\'activité',
@@ -2357,7 +2532,7 @@ def get_employee_info(mat):
     ]
     accidents_details_columns = [
         'N°', 'MAT', 'CIN', 'Nom', 'Prénom', 'Fonction', 'Affectation', 'date de l\'accident',
-    'Nature de lésion', 'Nombre de jours d\'arret',
+    'Nature de lésion', 'Nombre de jours d\'arret','Date d\'achèvement du certificat initial',
     'Nombre de jours de prolongation 1', 'Date d\'achèvement du certificat de prolongation',
     'Nombre de jours de prolongation 2', 'Date d\'achèvement du certificat de prolongation.1',
     'Nombre de jours prolongation 3', 'Date d\'achèvement du certificat de prolongation.2',
@@ -2388,6 +2563,11 @@ def get_employee_info(mat):
     'Certificat d\'aptitude physique d\'embauche', 'Observations', 'DATE DERNIÈRE VISITE',
     'Date Viste programmée', 'Observations', 'Date de visite médicale 2', 'Observations', 'Observations générales'
 ]
+    RECOMPENSE_COLUMNS = [
+    'MAT', 'CIN', 'Nom', 'Prenom', 'Fonction', 'Affectation', 'Date', 'Type de récompense', 
+    'Motif de récompense', 'Observations'
+]
+
     employee_info = {}
     epi_details = {}
     sens_details = {}
@@ -2397,108 +2577,107 @@ def get_employee_info(mat):
     habilitation_details = []
     discipline_details = []
     visite_medicale_details = []
+    recompense_details= []
     mat_str = str(mat)
 
     for key, df in dataframes.items():
-        if 'MAT' in df.columns:
-            if mat_str in df['MAT'].astype(str).values:
-                emp_data = df[df['MAT'].astype(str) == mat_str].iloc[0]
+     if 'MAT' in df.columns:
+        mat_series = df['MAT'].astype(str)
+        matching_rows = df[mat_series == mat_str]  # Récupérer toutes les lignes correspondant au matricule
+
+        if not matching_rows.empty:
+            for _, row in matching_rows.iterrows():
                 for col in columns_to_display:
-                    if col in emp_data:
-                        employee_info[col] = emp_data.get(col)
-                
+                    if col in row:
+                        employee_info[col] = row.get(col)
+
                 # Détails des EPI
                 for col in epi_details_columns:
-                    if col in emp_data and pd.notna(emp_data.get(col)):
+                    if col in row and pd.notna(row.get(col)):
                         if ':' in col:
                             epi_type = col.split(':')[0]
                             if epi_type not in epi_details:
                                 epi_details[epi_type] = {}
-                            epi_details[epi_type][col.split(': ')[1]] = emp_data.get(col)
-                
+                            epi_details[epi_type][col.split(': ')[1]] = row.get(col)
+
                 # Détails des sensibilisations
                 for col in sens_details_columns:
-                    if col in emp_data and pd.notna(emp_data.get(col)):
+                    if col in row and pd.notna(row.get(col)):
                         if ':' in col:
                             sens_type = col.split(':')[0]
                             if sens_type not in sens_details:
                                 sens_details[sens_type] = {}
-                            sens_details[sens_type][col.split(': ')[1]] = emp_data.get(col)
-                
+                            sens_details[sens_type][col.split(': ')[1]] = row.get(col)
+
                 # Détails des formations
                 for col in formation_details_columns:
-                    if col in emp_data and pd.notna(emp_data.get(col)):
+                    if col in row and pd.notna(row.get(col)):
                         if ':' in col:
                             formation_type = col.split(':')[0]
                             if formation_type not in formation_details:
                                 formation_details[formation_type] = {}
-                            formation_details[formation_type][col.split(': ')[1]] = emp_data.get(col)
+                            formation_details[formation_type][col.split(': ')[1]] = row.get(col)
 
-                # Détails disciplinaires
             # Détails disciplinaires
-                if 'disciplinary' in dataframes:
-                    disciplinary_df = dataframes['disciplinary']
-                    if mat_str in disciplinary_df['MAT'].astype(str).values:
-                        disciplinary_details = disciplinary_df[disciplinary_df['MAT'] == mat_str].to_dict(orient='records')
+            if key == 'disciplinary':
+                if not matching_rows.empty:
+                    disciplinary_details = matching_rows.to_dict(orient='records')
 
-
-                 # Détails des accidents
-        # Détails des accidents
             # Détails des accidents
-                # Détails des accidents
-                if key == 'accident':
-                    accident_df = df[df['MAT'] == mat]
-                    if not accident_df.empty:
-                        for _, row in accident_df.iterrows():
-                            accident_entry = {}
-            # Récupérer les champs pertinents
-                            for col in accidents_details_columns:
-                                 if col in row:
-                                        accident_entry[col] = row.get(col, '') if pd.notna(row.get(col, '')) else ''
+            if key == 'accident':
+                if not matching_rows.empty:
+                    for _, row in matching_rows.iterrows():
+                        accident_entry = {}
+                        # Récupérer les champs pertinents
+                        for col in accidents_details_columns:
+                            if col in row:
+                                accident_entry[col] = row.get(col, '') if pd.notna(row.get(col, '')) else ''
                         # Calculer le nombre total de jours d'arrêt
-                            def extract_days(days_str):
-                
-                                try:
-                                    return int(days_str.split()[0])
-                                except (ValueError, AttributeError, IndexError):
-                                    return 0
+                        def extract_days(days_str):
+                            try:
+                                return int(days_str.split()[0])
+                            except (ValueError, AttributeError, IndexError):
+                                return 0
 
-                            total_jours_arret = extract_days(row['Nombre de jours d\'arret'])
-                            for i in range(1, 12):  # Pour prolongation 1 à 11
-                                if f'Nombre de jours de prolongation {i}' in row:
-                                    total_jours_arret += extract_days(row[f'Nombre de jours de prolongation {i}'])
+                        total_jours_arret = extract_days(row.get('Nombre de jours d\'arret', ''))
+                        for i in range(1, 12):  # Pour prolongation 1 à 11
+                            if f'Nombre de jours de prolongation {i}' in row:
+                                total_jours_arret += extract_days(row[f'Nombre de jours de prolongation {i}'])
 
-                            accident_entry['Total jours d\'arret'] = f"{total_jours_arret} jours"
-                            accident_details.append(accident_entry)
-                 # Détails des habilitations
-                if key == 'habilitation':
-                    habilitation_df = df[df['MAT'] == mat]
-                    if not habilitation_df.empty:
-                        for _, row in habilitation_df.iterrows():
-                            habilitation_entry = {}
-                            for col in HABILITATION_COLUMNS:
-                                if col in row:
-                                    habilitation_entry[col] = row.get(col, '') if pd.notna(row.get(col, '')) else ''
-                            habilitation_details.append(habilitation_entry)
-                
-                                # Détails disciplinaires
-                if 'discipline' in dataframes:
-                    discipline_df = dataframes['discipline']
-                    if mat_str in discipline_df['MAT'].astype(str).values:
-                        discipline_details = discipline_df[discipline_df['MAT'] == mat_str].to_dict(orient='records')
+                        accident_entry['Total jours d\'arret'] = f"{total_jours_arret} jours"
+                        accident_details.append(accident_entry)
 
-                if 'visite_medicale' in dataframes:
-                    visite_medicale_df = dataframes['visite_medicale']
-                    if mat_str in visite_medicale_df['MAT'].astype(str).values:
-                        visite_medicale_details = visite_medicale_df[visite_medicale_df['MAT'] == mat_str].to_dict(orient='records')
+            # Détails des habilitations
+            if key == 'habilitation':
+                if not matching_rows.empty:
+                    for _, row in matching_rows.iterrows():
+                        habilitation_entry = {}
+                        for col in HABILITATION_COLUMNS:
+                            if col in row:
+                                habilitation_entry[col] = row.get(col, '') if pd.notna(row.get(col, '')) else ''
+                        habilitation_details.append(habilitation_entry)
 
-    return employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details 
+            # Détails disciplinaires
+            if key == 'discipline':
+                if not matching_rows.empty:
+                    discipline_details = matching_rows.to_dict(orient='records')
+
+            # Détails des visites médicales
+            if key == 'visite_medicale':
+                if not matching_rows.empty:
+                    visite_medicale_details = matching_rows.to_dict(orient='records')
+            if key == 'recompense':
+                if not matching_rows.empty:
+                    recompense_details = matching_rows.to_dict(orient='records')
+                    
+    return employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details, recompense_details
 
 from flask import Flask, render_template, jsonify
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
 import base64
+
 
 @app.route('/epi_dashboard')
 def epi_dashboard():
@@ -2547,6 +2726,474 @@ def epi_data():
     
     return jsonify(data)
 
+@app.route('/disciplinary_dashboard')
+def disciplinary_dashboard():
+    df = pd.read_excel(DISCIPLINARY_FILE)
+    
+    # Répartition des infractions par catégorie
+    infractions_by_category = df.groupby('Catégorie').size().reset_index(name='Nombre d\'Infractions')
+
+    # Répartition des infractions par fonction
+    infractions_by_function = df.groupby('Fonction').size().reset_index(name='Nombre d\'Infractions')
+
+    # Statut des actions disciplinaires
+    status_count = df['Status (Ouvert/Fermé/En cours)'].value_counts().reset_index()
+    status_count.columns = ['Status', 'Nombre']
+
+    data = {
+        'infractions_by_category': {
+            'labels': infractions_by_category['Catégorie'].tolist(),
+            'values': infractions_by_category['Nombre d\'Infractions'].tolist()
+        },
+        'infractions_by_function': {
+            'labels': infractions_by_function['Fonction'].tolist(),
+            'values': infractions_by_function['Nombre d\'Infractions'].tolist()
+        },
+        'status_count': {
+            'labels': status_count['Status'].tolist(),
+            'values': status_count['Nombre'].tolist()
+        }
+    }
+    
+    return render_template('disciplinary_dashboard.html', data=data)
+
+@app.route('/api/disciplinary_data')
+def disciplinary_data():
+    df = pd.read_excel(DISCIPLINARY_FILE)
+    
+    # Répartition des infractions par catégorie
+    infractions_by_category = df.groupby('Catégorie').size().reset_index(name='Nombre d\'Infractions')
+
+    # Répartition des infractions par fonction
+    infractions_by_function = df.groupby('Fonction').size().reset_index(name='Nombre d\'Infractions')
+
+    # Statut des actions disciplinaires
+    status_count = df['Status (Ouvert/Fermé/En cours)'].value_counts().reset_index()
+    status_count.columns = ['Status', 'Nombre']
+
+    data = {
+        'infractions_by_category': {
+            'labels': infractions_by_category['Catégorie'].tolist(),
+            'values': infractions_by_category['Nombre d\'Infractions'].tolist()
+        },
+        'infractions_by_function': {
+            'labels': infractions_by_function['Fonction'].tolist(),
+            'values': infractions_by_function['Nombre d\'Infractions'].tolist()
+        },
+        'status_count': {
+            'labels': status_count['Status'].tolist(),
+            'values': status_count['Nombre'].tolist()
+        }
+    }
+    
+    return jsonify(data)
+
+
+@app.route('/formations_dashboard')
+def formations_dashboard():
+    df = pd.read_excel(FORMATION_FILE)
+    
+    # Répartition des formations par Fonction
+    formation_by_function = df.groupby('FONCTION').size().reset_index(name='Nombre de Formations')
+    
+    # Répartition des formations par Section
+    formation_by_section = df.groupby('SECTION').size().reset_index(name='Nombre de Formations')
+
+    data = {
+        'formation_by_function': {
+            'labels': formation_by_function['FONCTION'].tolist(),
+            'values': formation_by_function['Nombre de Formations'].tolist()
+        },
+        'formation_by_section': {
+            'labels': formation_by_section['SECTION'].tolist(),
+            'values': formation_by_section['Nombre de Formations'].tolist()
+        }
+    }
+    
+    return render_template('formations_dashboard.html', data=data)
+
+@app.route('/api/formations_data')
+def formations_data():
+    df = pd.read_excel(FORMATION_FILE)
+    
+    # Répartition des formations par Fonction
+    formation_by_function = df.groupby('FONCTION').size().reset_index(name='Nombre de Formations')
+    
+    # Répartition des formations par Section
+    formation_by_section = df.groupby('SECTION').size().reset_index(name='Nombre de Formations')
+
+    data = {
+        'formation_by_function': {
+            'labels': formation_by_function['FONCTION'].tolist(),
+            'values': formation_by_function['Nombre de Formations'].tolist()
+        },
+        'formation_by_section': {
+            'labels': formation_by_section['SECTION'].tolist(),
+            'values': formation_by_section['Nombre de Formations'].tolist()
+        }
+    }
+    
+    return jsonify(data)
+
+@app.route('/sensibilisation_dashboard')
+def sensibilisation_dashboard():
+    # Chargement des données
+    df = pd.read_excel(SENS_FILE)
+    
+    # Répartition des sensibilisations par type
+    sensibilisation_types = df.filter(like=': Nombre').sum().reset_index()
+    sensibilisation_types.columns = ['Type de Sensibilisation', 'Nombre de Sensibilisations']
+    sensibilisation_types['Type de Sensibilisation'] = sensibilisation_types['Type de Sensibilisation'].str.replace(': Nombre', '')
+
+    # Répartition des sensibilisations par fonction
+    sens_by_function = df.groupby('FONCTION').sum().filter(like=': Nombre').sum(axis=1).reset_index()
+    sens_by_function.columns = ['Fonction', 'Nombre de Sensibilisations']
+
+    data = {
+        'sensibilisation_by_type': {
+            'labels': sensibilisation_types['Type de Sensibilisation'].tolist(),
+            'values': sensibilisation_types['Nombre de Sensibilisations'].tolist()
+        },
+        'sensibilisation_by_function': {
+            'labels': sens_by_function['Fonction'].tolist(),
+            'values': sens_by_function['Nombre de Sensibilisations'].tolist()
+        }
+    }
+    
+    return render_template('sensibilisation_dashboard.html', data=data)
+
+@app.route('/api/sensibilisation_data')
+def sensibilisation_data():
+    # Chargement des données
+    df = pd.read_excel(SENS_FILE)
+    
+    # Répartition des sensibilisations par type
+    sensibilisation_types = df.filter(like=': Nombre').sum().reset_index()
+    sensibilisation_types.columns = ['Type de Sensibilisation', 'Nombre de Sensibilisations']
+    sensibilisation_types['Type de Sensibilisation'] = sensibilisation_types['Type de Sensibilisation'].str.replace(': Nombre', '')
+
+    # Convertir les valeurs en entier si elles ne le sont pas
+    sensibilisation_types['Nombre de Sensibilisations'] = sensibilisation_types['Nombre de Sensibilisations'].astype(int)
+
+    # Répartition des sensibilisations par fonction
+    sens_by_function = df.groupby('FONCTION').sum().filter(like=': Nombre').sum(axis=1).reset_index()
+    sens_by_function.columns = ['Fonction', 'Nombre de Sensibilisations']
+
+    # Convertir les valeurs en entier si elles ne le sont pas
+    sens_by_function['Nombre de Sensibilisations'] = sens_by_function['Nombre de Sensibilisations'].astype(int)
+
+    data = {
+        'sensibilisation_by_type': {
+            'labels': sensibilisation_types['Type de Sensibilisation'].tolist(),
+            'values': sensibilisation_types['Nombre de Sensibilisations'].tolist()
+        },
+        'sensibilisation_by_function': {
+            'labels': sens_by_function['Fonction'].tolist(),
+            'values': sens_by_function['Nombre de Sensibilisations'].tolist()
+        }
+    }
+    
+    return jsonify(data)
+
+@app.route('/accidents_dashboard')
+def accidents_dashboard():
+    df = pd.read_excel(ACCIDENT_FILE)
+
+    # S'assurer que les colonnes numériques sont converties en nombres entiers ou flottants
+    numeric_columns = [
+        'Nombre de jours d\'arret', 'Nombre de jours de prolongation 1',
+        'Nombre de jours de prolongation 2', 'Nombre de jours prolongation 3',
+        'Nombre de jours prolongation 4', 'Nombre de jours prolongation 5',
+        'Nombre de jours prolongation 6', 'Nombre de jours prolongation 7',
+        'Nombre de jours prolongation 8', 'Nombre de jours prolongation 9',
+        'Nombre de jours prolongation 10', 'Nombre de jours prolongation 11'
+    ]
+    df[numeric_columns] = df[numeric_columns].fillna(0).apply(pd.to_numeric, errors='coerce')
+
+    # Total des jours d'arrêt par nature de lésion
+    df['Total_Jours_Arret'] = df[numeric_columns].sum(axis=1)
+    
+    # Répartition des jours d'arrêt par nature de lésion
+    accident_by_nature = df.groupby('Nature de lésion').agg({'Total_Jours_Arret': 'sum'}).reset_index()
+    
+    # Accidents par fonction
+    accidents_by_function = df.groupby('Fonction').size().reset_index(name='Nombre d\'Accidents')
+    
+    # Accidents par affectation
+    accidents_by_affectation = df.groupby('Affectation').size().reset_index(name='Nombre d\'Accidents')
+
+    data = {
+        'accident_by_nature': {
+            'labels': accident_by_nature['Nature de lésion'].tolist(),
+            'values': accident_by_nature['Total_Jours_Arret'].tolist()
+        },
+        'accidents_by_function': {
+            'labels': accidents_by_function['Fonction'].tolist(),
+            'values': accidents_by_function['Nombre d\'Accidents'].tolist()
+        },
+        'accidents_by_affectation': {
+            'labels': accidents_by_affectation['Affectation'].tolist(),
+            'values': accidents_by_affectation['Nombre d\'Accidents'].tolist()
+        }
+    }
+
+    return render_template('accidents_dashboard.html', data=data)
+
+@app.route('/api/accidents_data')
+def accidents_data():
+    df = pd.read_excel(ACCIDENT_FILE)
+
+    # S'assurer que les colonnes numériques sont converties en nombres entiers ou flottants
+    numeric_columns = [
+        'Nombre de jours d\'arret', 'Nombre de jours de prolongation 1',
+        'Nombre de jours de prolongation 2', 'Nombre de jours prolongation 3',
+        'Nombre de jours prolongation 4', 'Nombre de jours prolongation 5',
+        'Nombre de jours prolongation 6', 'Nombre de jours prolongation 7',
+        'Nombre de jours prolongation 8', 'Nombre de jours prolongation 9',
+        'Nombre de jours prolongation 10', 'Nombre de jours prolongation 11'
+    ]
+    df[numeric_columns] = df[numeric_columns].fillna(0).apply(pd.to_numeric, errors='coerce')
+
+    # Total des jours d'arrêt par nature de lésion
+    df['Total_Jours_Arret'] = df[numeric_columns].sum(axis=1)
+    
+    # Répartition des jours d'arrêt par nature de lésion
+    accident_by_nature = df.groupby('Nature de lésion').agg({'Total_Jours_Arret': 'sum'}).reset_index()
+    
+    # Accidents par fonction
+    accidents_by_function = df.groupby('Fonction').size().reset_index(name='Nombre d\'Accidents')
+    
+    # Accidents par affectation
+    accidents_by_affectation = df.groupby('Affectation').size().reset_index(name='Nombre d\'Accidents')
+
+    data = {
+        'accident_by_nature': {
+            'labels': accident_by_nature['Nature de lésion'].tolist(),
+            'values': accident_by_nature['Total_Jours_Arret'].tolist()
+        },
+        'accidents_by_function': {
+            'labels': accidents_by_function['Fonction'].tolist(),
+            'values': accidents_by_function['Nombre d\'Accidents'].tolist()
+        },
+        'accidents_by_affectation': {
+            'labels': accidents_by_affectation['Affectation'].tolist(),
+            'values': accidents_by_affectation['Nombre d\'Accidents'].tolist()
+        }
+    }
+
+    return jsonify(data)
+
+
+@app.route('/habilitation_dashboard')
+def habilitation_dashboard():
+    df = pd.read_excel(HABILITATION_FILE)
+
+    # Répartition des habilitations par Type d'habilitation
+    habilitation_by_type = df.groupby('Type d\'habilitation').size().reset_index(name='Nombre d\'Habilitations')
+
+    # Répartition des habilitations par Fonction
+    habilitation_by_function = df.groupby('Fonction').size().reset_index(name='Nombre d\'Habilitations')
+
+    # Répartition des habilitations par Organisme
+    habilitation_by_organisme = df.groupby('Organisme').size().reset_index(name='Nombre d\'Habilitations')
+
+    data = {
+        'habilitation_by_type': {
+            'labels': habilitation_by_type['Type d\'habilitation'].tolist(),
+            'values': habilitation_by_type['Nombre d\'Habilitations'].tolist()
+        },
+        'habilitation_by_function': {
+            'labels': habilitation_by_function['Fonction'].tolist(),
+            'values': habilitation_by_function['Nombre d\'Habilitations'].tolist()
+        },
+        'habilitation_by_organisme': {
+            'labels': habilitation_by_organisme['Organisme'].tolist(),
+            'values': habilitation_by_organisme['Nombre d\'Habilitations'].tolist()
+        }
+    }
+
+    return render_template('habilitation_dashboard.html', data=data)
+
+@app.route('/api/habilitation_data')
+def habilitation_data():
+    df = pd.read_excel(HABILITATION_FILE)
+
+    # Répartition des habilitations par Type d'habilitation
+    habilitation_by_type = df.groupby('Type d\'habilitation').size().reset_index(name='Nombre d\'Habilitations')
+
+    # Répartition des habilitations par Fonction
+    habilitation_by_function = df.groupby('Fonction').size().reset_index(name='Nombre d\'Habilitations')
+
+    # Répartition des habilitations par Organisme
+    habilitation_by_organisme = df.groupby('Organisme').size().reset_index(name='Nombre d\'Habilitations')
+
+    data = {
+        'habilitation_by_type': {
+            'labels': habilitation_by_type['Type d\'habilitation'].tolist(),
+            'values': habilitation_by_type['Nombre d\'Habilitations'].tolist()
+        },
+        'habilitation_by_function': {
+            'labels': habilitation_by_function['Fonction'].tolist(),
+            'values': habilitation_by_function['Nombre d\'Habilitations'].tolist()
+        },
+        'habilitation_by_organisme': {
+            'labels': habilitation_by_organisme['Organisme'].tolist(),
+            'values': habilitation_by_organisme['Nombre d\'Habilitations'].tolist()
+        }
+    }
+
+    return jsonify(data)
+
+
+@app.route('/discipline_dashboard')
+def discipline_dashboard():
+    df = pd.read_excel(DISCIPLINE_FILE)
+
+    # Répartition des mesures disciplinaires par Motif de sanction 1
+    discipline_by_motif1 = df.groupby('Motif de sanction 1').size().reset_index(name='Nombre de Sanctions')
+
+    # Répartition des mesures disciplinaires par Type de sanction 1
+    discipline_by_type1 = df.groupby('Type de sanction 1').size().reset_index(name='Nombre de Sanctions')
+
+    # Répartition des mesures disciplinaires par Fonction
+    discipline_by_function = df.groupby('Fonction').size().reset_index(name='Nombre de Sanctions')
+
+    # Répartition des mesures disciplinaires par Organisme
+    discipline_by_organisme = df.groupby('Organisme').size().reset_index(name='Nombre de Sanctions')
+
+    data = {
+        'discipline_by_motif1': {
+            'labels': discipline_by_motif1['Motif de sanction 1'].tolist(),
+            'values': discipline_by_motif1['Nombre de Sanctions'].tolist()
+        },
+        'discipline_by_type1': {
+            'labels': discipline_by_type1['Type de sanction 1'].tolist(),
+            'values': discipline_by_type1['Nombre de Sanctions'].tolist()
+        },
+        'discipline_by_function': {
+            'labels': discipline_by_function['Fonction'].tolist(),
+            'values': discipline_by_function['Nombre de Sanctions'].tolist()
+        },
+        'discipline_by_organisme': {
+            'labels': discipline_by_organisme['Organisme'].tolist(),
+            'values': discipline_by_organisme['Nombre de Sanctions'].tolist()
+        }
+    }
+
+    return render_template('discipline_dashboard.html', data=data)
+
+@app.route('/api/discipline_data')
+def discipline_data():
+    df = pd.read_excel(DISCIPLINE_FILE)
+
+    # Répartition des mesures disciplinaires par Motif de sanction 1
+    discipline_by_motif1 = df.groupby('Motif de sanction 1').size().reset_index(name='Nombre de Sanctions')
+
+    # Répartition des mesures disciplinaires par Type de sanction 1
+    discipline_by_type1 = df.groupby('Type de sanction 1').size().reset_index(name='Nombre de Sanctions')
+
+    # Répartition des mesures disciplinaires par Fonction
+    discipline_by_function = df.groupby('Fonction').size().reset_index(name='Nombre de Sanctions')
+
+    # Répartition des mesures disciplinaires par Organisme
+    discipline_by_organisme = df.groupby('Organisme').size().reset_index(name='Nombre de Sanctions')
+
+    data = {
+        'discipline_by_motif1': {
+            'labels': discipline_by_motif1['Motif de sanction 1'].tolist(),
+            'values': discipline_by_motif1['Nombre de Sanctions'].tolist()
+        },
+        'discipline_by_type1': {
+            'labels': discipline_by_type1['Type de sanction 1'].tolist(),
+            'values': discipline_by_type1['Nombre de Sanctions'].tolist()
+        },
+        'discipline_by_function': {
+            'labels': discipline_by_function['Fonction'].tolist(),
+            'values': discipline_by_function['Nombre de Sanctions'].tolist()
+        },
+        'discipline_by_organisme': {
+            'labels': discipline_by_organisme['Organisme'].tolist(),
+            'values': discipline_by_organisme['Nombre de Sanctions'].tolist()
+        }
+    }
+
+    return jsonify(data)
+
+
+@app.route('/visite_medicale_dashboard')
+def visite_medicale_dashboard():
+    df = pd.read_excel(VISITE_MEDICALE_FILE)
+
+    # Répartition des visites médicales par Fonction
+    medical_by_function = df.groupby('FONCTION').size().reset_index(name='Nombre de Visites')
+
+    # Répartition des visites médicales par Date de Dernière Visite
+    medical_by_last_visit = df.groupby('DATE DERNIÈRE VISITE').size().reset_index(name='Nombre de Visites')
+
+    # Répartition des visites médicales par Date de Visite Programmée
+    medical_by_scheduled_visit = df.groupby('Date Viste programmée').size().reset_index(name='Nombre de Visites')
+
+    # Répartition des certificats d'aptitude physique d'embauche
+    medical_by_certificates = df.groupby('Certificat d\'aptitude physique d\'embauche').size().reset_index(name='Nombre de Certificats')
+
+    data = {
+        'medical_by_function': {
+            'labels': medical_by_function['FONCTION'].tolist(),
+            'values': medical_by_function['Nombre de Visites'].tolist()
+        },
+        'medical_by_last_visit': {
+            'dates': medical_by_last_visit['DATE DERNIÈRE VISITE'].tolist(),
+            'counts': medical_by_last_visit['Nombre de Visites'].tolist()
+        },
+        'medical_by_scheduled_visit': {
+            'dates': medical_by_scheduled_visit['Date Viste programmée'].tolist(),
+            'counts': medical_by_scheduled_visit['Nombre de Visites'].tolist()
+        },
+        'medical_by_certificates': {
+            'labels': medical_by_certificates['Certificat d\'aptitude physique d\'embauche'].tolist(),
+            'counts': medical_by_certificates['Nombre de Certificats'].tolist()
+        }
+    }
+    
+    return render_template('visite_medicale_dashboard.html', data=data)
+
+
+@app.route('/api/visite_medicale_data')
+def visite_medicale_data():
+    df = pd.read_excel(VISITE_MEDICALE_FILE)
+
+    # Répartition des visites médicales par Fonction
+    medical_by_function = df.groupby('FONCTION').size().reset_index(name='Nombre de Visites')
+
+    # Répartition des visites médicales par Date de Dernière Visite
+    medical_by_last_visit = df.groupby('DATE DERNIÈRE VISITE').size().reset_index(name='Nombre de Visites')
+
+    # Répartition des visites médicales par Date de Visite Programmée
+    medical_by_scheduled_visit = df.groupby('Date Viste programmée').size().reset_index(name='Nombre de Visites')
+
+    # Répartition des certificats d'aptitude physique d'embauche
+    medical_by_certificates = df.groupby('Certificat d\'aptitude physique d\'embauche').size().reset_index(name='Nombre de Certificats')
+
+    data = {
+        'medical_by_function': {
+            'labels': medical_by_function['FONCTION'].tolist(),
+            'values': medical_by_function['Nombre de Visites'].tolist()
+        },
+        'medical_by_last_visit': {
+            'dates': medical_by_last_visit['DATE DERNIÈRE VISITE'].tolist(),
+            'counts': medical_by_last_visit['Nombre de Visites'].tolist()
+        },
+        'medical_by_scheduled_visit': {
+            'dates': medical_by_scheduled_visit['Date Viste programmée'].tolist(),
+            'counts': medical_by_scheduled_visit['Nombre de Visites'].tolist()
+        },
+        'medical_by_certificates': {
+            'labels': medical_by_certificates['Certificat d\'aptitude physique d\'embauche'].tolist(),
+            'counts': medical_by_certificates['Nombre de Certificats'].tolist()
+        }
+    }
+    
+    return jsonify(data)
 
 
 import pdfkit
@@ -2560,28 +3207,103 @@ import requests
 import msal
 import os
 
+# Configuration de pdfkit
+path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
+
+# Configuration des informations d'application
+CLIENT_ID = 'a8796c3f-5c18-4b36-b80c-3ca225a02320'
+CLIENT_SECRET = 'u2Z8Q~KjE.ksWU7L8CPdaXR-64k1FoZf1-hw_atb'
+TENANT_ID = 'eb12f8ec-35f2-415d-97bf-0e34301876a7'
+AUTHORITY = f'https://login.microsoftonline.com/{TENANT_ID}'
+SCOPE = ['https://graph.microsoft.com/.default']
+
+def get_access_token():
+    app = msal.ConfidentialClientApplication(
+        CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
+    )
+    result = app.acquire_token_for_client(scopes=SCOPE)
+    if 'access_token' in result:
+        return result['access_token']
+    raise Exception('Erreur lors de l\'obtention du token d\'accès: ' + result.get('error', 'Unknown error'))
+
+def get_drive_id(access_token):
+    headers = {'Authorization': f'Bearer {access_token}'}
+    response = requests.get('https://graph.microsoft.com/v1.0/me/drives', headers=headers)
+    if response.status_code == 200:
+        drives = response.json()
+        if drives.get('value'):
+            return drives['value'][0]['id']  # Utiliser le premier drive pour cet exemple
+    raise Exception(f'Erreur lors de la récupération du drive ID: {response.status_code} - {response.text}')
+
 @app.route('/search_employee', methods=['GET', 'POST'])
 def search_employee():
+    pdf = None
     if request.method == 'POST':
         mat = request.form['mat']
         # Remplacez get_employee_info par votre fonction réelle pour obtenir les détails
-        employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details = get_employee_info(mat)
+        employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details,recompense_details = get_employee_info(mat)
         
         if employee_info:
-            return render_template('employee_info.html',
-                                   employee_info=employee_info,
-                                   epi_details=epi_details,
-                                   sens_details=sens_details,
-                                   formation_details=formation_details,
-                                   disciplinary_details=disciplinary_details,
-                                   accident_details=accident_details,
-                                   habilitation_details=habilitation_details,
-                                   discipline_details=discipline_details,
-                                   visite_medicale_details=visite_medicale_details)
+            action = request.form.get('action')
+            
+            if action == 'download':
+                html = render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details, recompense_details=recompense_details)
+                pdf = pdfkit.from_string(html, False, configuration=config)
+                
+                response = make_response(pdf)
+                response.headers['Content-Type'] = 'application/pdf'
+                response.headers['Content-Disposition'] = f'attachment; filename={mat}_employee_info.pdf'
+                
+                return response
+            
+            elif action == 'generate_qr':
+                if pdf is None:
+                    html = render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details,recompense_details=recompense_details)
+                    pdf = pdfkit.from_string(html, False, configuration=config)
+
+                token = get_access_token()
+                headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/pdf'}
+                
+                try:
+                    drive_id = get_drive_id(token)
+                    
+                    file_name = f'{mat}_employee_info.pdf'
+                    upload_url = f'https://graph.microsoft.com/v1.0/drives/{drive_id}/root:/{file_name}:/content'
+                    response = requests.put(upload_url, headers=headers, data=pdf)
+                    
+                    if response.status_code == 201:
+                        file_url = response.json().get("webUrl")
+                        
+                        qr = qrcode.QRCode(
+                            version=1,
+                            error_correction=qrcode.constants.ERROR_CORRECT_L,
+                            box_size=10,
+                            border=4,
+                        )
+                        qr.add_data(file_url)
+                        qr.make(fit=True)
+                        img = qr.make_image(fill='black', back_color='white')
+                        
+                        img_io = io.BytesIO()
+                        img.save(img_io, 'PNG')
+                        img_io.seek(0)
+                        
+                        return send_file(img_io, mimetype='image/png', as_attachment=True, download_name=f'{mat}_qr_code.png')
+                    else:
+                        flash(f'Erreur lors du téléversement du fichier sur OneDrive: {response.status_code} - {response.text}', 'danger')
+                        return redirect(url_for('search_employee'))
+                
+                except Exception as e:
+                    flash(f'Erreur: {str(e)}', 'danger')
+                    return redirect(url_for('search_employee'))
+            
+            else:
+                return render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details,recompense_details=recompense_details)
+        
         else:
             flash('MAT not found in any of the files.', 'danger')
             return redirect(url_for('search_employee'))
-    
     return render_template('search_employee.html')
 
 @app.route('/download_pdf/<mat>')

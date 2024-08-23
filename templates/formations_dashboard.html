@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Formations</title>
+    <!-- Inclure Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des Formations</h1>
+    
+    <div id="formation-pie-chart-function"></div>
+    <div id="formation-bar-chart-section"></div>
+
+    <script>
+        function loadFormationsData() {
+            $.getJSON('/api/formations_data', function(data) {
+                // Répartition des Formations par Fonction
+                var dataFunction = [{
+    x: data.formation_by_function.values,
+    y: data.formation_by_function.labels,
+    type: 'bar',
+    orientation: 'h',  // Orientation horizontale
+    marker: {
+        color: 'rgba(55, 128, 191, 0.6)',
+        width: 1
+    }
+}];
+
+var layoutFunction = {
+    title: 'Répartition des Formations par Fonction',
+    xaxis: {
+        title: 'Nombre de Formations'
+    },
+    yaxis: {
+        title: 'Fonction'
+    },
+    margin: {
+        l: 150,  // Espace pour les labels sur l'axe Y
+        r: 10,
+        t: 50,
+        b: 50
+    }
+};
+
+Plotly.newPlot('formation-pie-chart-function', dataFunction, layoutFunction);
+                // Répartition des Formations par Section avec un graphique en barres
+                var dataSection = [{
+                    x: data.formation_by_section.labels,
+                    y: data.formation_by_section.values,
+                    type: 'bar'
+                }];
+                
+                var layoutSection = {
+                    title: 'Répartition des Formations par Section'
+                };
+                
+                Plotly.newPlot('formation-bar-chart-section', dataSection, layoutSection);
+            });
+        }
+
+        // Charger les données au démarrage
+        $(document).ready(function() {
+            loadFormationsData();
+        });
+    </script>
+</body>
+{% endblock %}

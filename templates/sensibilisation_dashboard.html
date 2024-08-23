@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Sensibilisations</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des Sensibilisations</h1>
+
+    <!-- Histogramme des Sensibilisations par Type -->
+    <div id="sensibilisation-histogram"></div>
+
+    <!-- Graphique en Barres par Fonction -->
+    <div id="sensibilisation-bar-function"></div>
+
+    <script>
+        // Charger les données depuis l'API
+        fetch('/api/sensibilisation_data')
+            .then(response => response.json())
+            .then(data => {
+                // Histogramme des Sensibilisations par Type
+                var traceHistogram = {
+                    x: data.sensibilisation_by_type.labels,
+                    y: data.sensibilisation_by_type.values,
+                    type: 'bar'
+                };
+                var layoutHistogram = {
+                    title: 'Nombre de Sensibilisations par Type',
+                    xaxis: { title: 'Type de Sensibilisation' },
+                    yaxis: { title: 'Nombre de Sensibilisations' }
+                };
+                Plotly.newPlot('sensibilisation-histogram', [traceHistogram], layoutHistogram);
+
+                // Graphique en Barres par Fonction
+                var traceBarFunction = {
+                    x: data.sensibilisation_by_function.values,
+                    y: data.sensibilisation_by_function.labels,
+                    type: 'bar',
+                    orientation: 'h'
+                };
+                var layoutBarFunction = {
+                    title: 'Nombre de Sensibilisations par Fonction',
+                    xaxis: { title: 'Nombre de Sensibilisations' },
+                    yaxis: { title: 'Fonction' }
+                };
+                Plotly.newPlot('sensibilisation-bar-function', [traceBarFunction], layoutBarFunction);
+            })
+            .catch(error => console.error('Erreur lors du chargement des données:', error));
+    </script>
+</body>
+</html>

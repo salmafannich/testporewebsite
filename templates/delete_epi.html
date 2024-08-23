@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Delete Record</h2>
+<p>Are you sure you want to delete this record?</p>
+<form method="POST">
+    <input type="hidden" name="confirm" value="yes">
+    <p>Affectation: {{ record['AFFECTATION'] }}</p>
+    <p>MAT: {{ record['MAT'] }}</p>
+    <p>Nom et Prénom: {{ record['NOM ET PRENOM'] }}</p>
+    <p>Fonction: {{ record['FONCTION'] }}</p>
+    <p>CIN: {{ record['CIN'] }}</p>
+    <p>Date d'embauche: {{ record['D EMBAUCHE'] }}</p>
+    <p>Date de recharge EPI: {{ record['Date récharge EPI'] }}</p>
+    <p>Site: {{ record['SITE'] }}</p>
+    <p>Casque: Nombre {{ record['Casque: Nombre'] }}</p>
+    <p>Casque: Taille/type: {{ record['Casque: Taille/type'] }}</p>
+    <p>Casque: Date de remise: {{ record['Casque: date de remise'] }}</p>
+    <p>Chaussures: Nombre: {{ record['Chaussures: Nombre'] }}</p>
+    <p>Chaussures: Taille/type: {{ record['Chaussures: Taille/type'] }}</p>
+    <p>Chaussures: Date de remise: {{ record['Chaussures: date de remise'] }}</p>
+    <p>Gants: Nombre: {{ record['Gants: Nombre'] }}</p>
+    <p>Gants: Taille/type: {{ record['Gants: Taille/type'] }}</p>
+    <p>Gants: Date de remise: {{ record['Gants: date de remise'] }}</p>
+    <p>Gilet fluorescent: Nombre: {{ record['Gilet fluoreçant: Nombre'] }}</p>
+    <p>Gilet fluorescent: Taille/type: {{ record['Gilet fluoreçant: Taille/type'] }}</p>
+    <p>Gilet fluorescent: Date de remise: {{ record['Gilet fluoreçant: date de remise'] }}</p>
+    <p>Combinaison imperméable: Nombre: {{ record['Combinaison imperméable: Nombre'] }}</p>
+    <p>Combinaison imperméable: Taille/type: {{ record['Combinaison imperméable: Taille/type'] }}</p>
+    <p>Combinaison imperméable: Date de remise: {{ record['Combinaison imperméable: date de remise'] }}</p>
+    <p>Lunettes (Anti-poussière ): Nombre: {{ record['Lunettes (Anti-poussière ): Nombre'] }}</p>
+    <p>Lunettes (Anti-poussière ): Taille/type: {{ record['Lunettes (Anti-poussière ): Taille/type'] }}</p>
+    <p>Lunettes (Anti-poussière ): Date de remise: {{ record['Lunettes (Anti-poussière ): date de remise'] }}</p>
+    <p>Bote de sécurité: Nombre: {{ record['Bote de sécurité: Nombre'] }}</p>
+    <p>Bote de sécurité: Taille/type: {{ record['Bote de sécurité: Taille/type'] }}</p>
+    <p>Bote de sécurité: Date de remise: {{ record['Bote de sécurité: date de remise'] }}</p>
+    <p>Gilet de sauvetage: Nombre: {{ record['Gilet de sauvetage: Nombre'] }}</p>
+    <p>Gilet de sauvetage: Taille/type: {{ record['Gilet de sauvetage: Taille/type'] }}</p>
+    <p>Gilet de sauvetage: Date de remise: {{ record['Gilet de sauvetage: date de remise'] }}</p>
+    <p>Autre: Nombre: {{ record['Autre: Nombre'] }}</p>
+    <p>Autre: Taille/type: {{ record['Autre: Taille/type'] }}</p>
+    <p>Autre: Date de remise: {{ record['Autre: date de remise'] }}</p>
+
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a href="{{ url_for('view_epi') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

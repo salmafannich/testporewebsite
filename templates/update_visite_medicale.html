@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Mettre à jour une Visite Médicale</h2>
+
+<form method="post" action="{{ url_for('update_visite_medicale', index=index) }}">
+    {% for col in columns %}
+        <div class="form-group">
+            <label for="{{ col }}">{{ col }}</label>
+            {% if 'date' in col.lower() %}
+                <input type="date" class="form-control" id="{{ col }}" name="{{ col }}" 
+                       value="{{ data[col] if data[col] is not none else '' }}">
+            {% else %}
+                <input type="text" class="form-control" id="{{ col }}" name="{{ col }}" 
+                       value="{{ data[col] | default('') }}">
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+</form>
+{% endblock %}

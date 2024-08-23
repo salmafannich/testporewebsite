@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Habilitations</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des Habilitations</h1>
+
+    <!-- Graphique en Barres par Type d'Habilitation -->
+    <div id="habilitation-bar-type"></div>
+
+    <!-- Graphique en Barres par Fonction -->
+    <div id="habilitation-bar-function"></div>
+
+    <!-- Graphique en Barres par Organisme -->
+    <div id="habilitation-bar-organisme"></div>
+
+    <script>
+        fetch('/api/habilitation_data')
+            .then(response => response.json())
+            .then(data => {
+                // Graphique en Barres par Type d'Habilitation
+                var traceBarType = {
+                    x: data.habilitation_by_type.labels,
+                    y: data.habilitation_by_type.values,
+                    type: 'bar'
+                };
+                var layoutBarType = {
+                    title: 'Répartition des Habilitations par Type',
+                    xaxis: { title: 'Type d\'Habilitation' },
+                    yaxis: { title: 'Nombre d\'Habilitations' }
+                };
+                Plotly.newPlot('habilitation-bar-type', [traceBarType], layoutBarType);
+
+                // Graphique en Barres par Fonction
+                var traceBarFunction = {
+                    x: data.habilitation_by_function.values,
+                    y: data.habilitation_by_function.labels,
+                    type: 'bar',
+                    orientation: 'h'
+                };
+                var layoutBarFunction = {
+                    title: 'Répartition des Habilitations par Fonction',
+                    xaxis: { title: 'Nombre d\'Habilitations' },
+                    yaxis: { title: 'Fonction' }
+                };
+                Plotly.newPlot('habilitation-bar-function', [traceBarFunction], layoutBarFunction);
+
+                // Graphique en Barres par Organisme
+                var traceBarOrganisme = {
+                    x: data.habilitation_by_organisme.values,
+                    y: data.habilitation_by_organisme.labels,
+                    type: 'bar',
+                    orientation: 'h'
+                };
+                var layoutBarOrganisme = {
+                    title: 'Répartition des Habilitations par Organisme',
+                    xaxis: { title: 'Nombre d\'Habilitations' },
+                    yaxis: { title: 'Organisme' }
+                };
+                Plotly.newPlot('habilitation-bar-organisme', [traceBarOrganisme], layoutBarOrganisme);
+            });
+    </script>
+</body>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Importer un Fichier Excel pour les Visites Médicales</h2>
+<form action="{{ url_for('import_visite_medicale') }}" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="file">Sélectionner un fichier Excel:</label>
+        <input type="file" class="form-control" id="file" name="file" accept=".xlsx, .xls" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Importer</button>
+</form>
+{% endblock %}

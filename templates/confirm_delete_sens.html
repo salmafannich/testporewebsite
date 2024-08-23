@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Confirmer la Suppression</h2>
+<p>Êtes-vous sûr de vouloir supprimer cet enregistrement ?</p>
+<table class="table">
+    <tbody>
+        {% for key, value in record.items() %}
+            <tr>
+                <th>{{ key }}</th>
+                <td>{{ value }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<form method="post" action="{{ url_for('confirm_delete_sens', index=index) }}">
+    <button type="submit" class="btn btn-danger">Supprimer</button>
+    <a href="{{ url_for('view_sens') }}" class="btn btn-secondary">Annuler</a>
+</form>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mt-4">
+    <h2>Générer Fiche Employé</h2>
+    <form action="{{ url_for('generate_fiche') }}" method="post">
+        <div class="form-group">
+            <label for="matricule">Matricule:</label>
+            <input type="text" class="form-control" id="matricule" name="matricule" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Générer Fiche</button>
+    </form>
+</div>
+{% endblock %}

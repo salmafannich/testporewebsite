@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Accidents de Travail</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des Accidents de Travail</h1>
+
+    <!-- Histogramme des Jours d'Arrêt par Nature de Lésion -->
+    <div id="arret-nature-histogram"></div>
+
+    <!-- Graphique en Barres par Fonction -->
+    <div id="accidents-bar-function"></div>
+
+    <!-- Graphique en Barres par Affectation -->
+    <div id="accidents-bar-affectation"></div>
+
+    <script>
+        fetch('/api/accidents_data')
+            .then(response => response.json())
+            .then(data => {
+                // Histogramme des Jours d'Arrêt par Nature de Lésion
+                var traceHistogram = {
+                    x: data.accident_by_nature.labels,
+                    y: data.accident_by_nature.values,
+                    type: 'bar'
+                };
+                var layoutHistogram = {
+                    title: 'Total des Jours d\'Arrêt par Nature de Lésion',
+                    xaxis: { title: 'Nature de Lésion' },
+                    yaxis: { title: 'Total des Jours d\'Arrêt' }
+                };
+                Plotly.newPlot('arret-nature-histogram', [traceHistogram], layoutHistogram);
+
+                // Graphique en Barres par Fonction
+                var traceBarFunction = {
+                    x: data.accidents_by_function.values,
+                    y: data.accidents_by_function.labels,
+                    type: 'bar',
+                    orientation: 'h'
+                };
+                var layoutBarFunction = {
+                    title: 'Nombre d\'Accidents par Fonction',
+                    xaxis: { title: 'Nombre d\'Accidents' },
+                    yaxis: { title: 'Fonction' }
+                };
+                Plotly.newPlot('accidents-bar-function', [traceBarFunction], layoutBarFunction);
+
+                // Graphique en Barres par Affectation
+                var traceBarAffectation = {
+                    x: data.accidents_by_affectation.values,
+                    y: data.accidents_by_affectation.labels,
+                    type: 'bar',
+                    orientation: 'h'
+                };
+                var layoutBarAffectation = {
+                    title: 'Nombre d\'Accidents par Affectation',
+                    xaxis: { title: 'Nombre d\'Accidents' },
+                    yaxis: { title: 'Affectation' }
+                };
+                Plotly.newPlot('accidents-bar-affectation', [traceBarAffectation], layoutBarAffectation);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+{% endblock %}

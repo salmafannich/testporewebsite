@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Confirmer la suppression</h2>
+
+<p>Voulez-vous vraiment supprimer cet enregistrement?</p>
+
+<!-- Affichage des détails de l'enregistrement -->
+<table class="table">
+    <thead>
+        <tr>
+            {% for col in columns %}
+                <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            {% for col in columns %}
+                <td>{{ data[col] }}</td>
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>
+
+<form method="post" action="{{ url_for('confirm_delete_discipline', index=index) }}">
+    <button type="submit" class="btn btn-danger">Oui</button>
+    <a href="{{ url_for('view_discipline') }}" class="btn btn-secondary">Non</a>
+</form>
+{% endblock %}

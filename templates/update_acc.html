@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Modifier l'accident de travail</h2>
+
+<form method="post" action="{{ url_for('update_acc', index=index) }}">
+    {% for column in columns %}
+        <div class="form-group">
+            <label for="{{ column }}">{{ column }}:</label>
+            {% if column in date_columns %}
+                <input type="date" name="{{ column }}" class="form-control" id="{{ column }}" value="{{ data[column] }}">
+            {% else %}
+                <input type="text" name="{{ column }}" class="form-control" id="{{ column }}" value="{{ data[column] }}">
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+</form>
+{% endblock %}

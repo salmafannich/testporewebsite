@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Sanctions Disciplinaires</title>
+    <!-- Inclure Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des Sanctions Disciplinaires</h1>
+    
+    <div id="infractions-pie-chart-category"></div>
+    <div id="infractions-bar-chart-function"></div>
+    <div id="actions-status-chart"></div>
+
+    <script>
+        function loadDisciplinaryData() {
+            $.getJSON('/api/disciplinary_data', function(data) {
+                // Répartition des infractions par catégorie
+                var dataCategory = [{
+                    values: data.infractions_by_category.values,
+                    labels: data.infractions_by_category.labels,
+                    type: 'pie'
+                }];
+                
+                var layoutCategory = {
+                    title: 'Répartition des Infractions par Catégorie'
+                };
+                
+                Plotly.newPlot('infractions-pie-chart-category', dataCategory, layoutCategory);
+                
+                // Répartition des infractions par fonction avec un graphique en barres
+                var dataFunction = [{
+                    x: data.infractions_by_function.labels,
+                    y: data.infractions_by_function.values,
+                    type: 'bar'
+                }];
+                
+                var layoutFunction = {
+                    title: 'Répartition des Infractions par Fonction',
+                    xaxis: { title: 'Fonction' },
+                    yaxis: { title: 'Nombre d\'Infractions' }
+                };
+                
+                Plotly.newPlot('infractions-bar-chart-function', dataFunction, layoutFunction);
+
+                // Statut des actions disciplinaires
+                var dataStatus = [{
+                    values: data.status_count.values,
+                    labels: data.status_count.labels,
+                    type: 'pie'
+                }];
+                
+                var layoutStatus = {
+                    title: 'Statut des Actions Disciplinaires'
+                };
+                
+                Plotly.newPlot('actions-status-chart', dataStatus, layoutStatus);
+            });
+        }
+
+        // Charger les données au démarrage
+        $(document).ready(function() {
+            loadDisciplinaryData();
+        });
+    </script>
+</body>
+{% endblock %}

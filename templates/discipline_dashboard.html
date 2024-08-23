@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Mesures Disciplinaires</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des Mesures Disciplinaires</h1>
+
+    <!-- Graphique en Barres par Motif de Sanction 1 -->
+    <div id="discipline-bar-motif1"></div>
+
+    <!-- Graphique en Barres par Type de Sanction 1 -->
+    <div id="discipline-bar-type1"></div>
+
+    <!-- Graphique en Barres par Fonction -->
+    <div id="discipline-bar-function"></div>
+
+    <!-- Graphique en Barres par Organisme -->
+    <div id="discipline-bar-organisme"></div>
+
+    <script>
+        fetch('/api/discipline_data')
+            .then(response => response.json())
+            .then(data => {
+                // Graphique en Barres par Motif de Sanction 1
+                var traceBarMotif1 = {
+                    x: data.discipline_by_motif1.labels,
+                    y: data.discipline_by_motif1.values,
+                    type: 'bar'
+                };
+                var layoutBarMotif1 = {
+                    title: 'Répartition des Sanctions par Motif 1',
+                    xaxis: { title: 'Motif de Sanction' },
+                    yaxis: { title: 'Nombre de Sanctions' }
+                };
+                Plotly.newPlot('discipline-bar-motif1', [traceBarMotif1], layoutBarMotif1);
+
+                // Graphique en Barres par Type de Sanction 1
+                var traceBarType1 = {
+                    x: data.discipline_by_type1.labels,
+                    y: data.discipline_by_type1.values,
+                    type: 'bar'
+                };
+                var layoutBarType1 = {
+                    title: 'Répartition des Sanctions par Type 1',
+                    xaxis: { title: 'Type de Sanction' },
+                    yaxis: { title: 'Nombre de Sanctions' }
+                };
+                Plotly.newPlot('discipline-bar-type1', [traceBarType1], layoutBarType1);
+
+                // Graphique en Barres par Fonction
+                var traceBarFunction = {
+                    x: data.discipline_by_function.values,
+                    y: data.discipline_by_function.labels,
+                    type: 'bar',
+                    orientation: 'h'
+                };
+                var layoutBarFunction = {
+                    title: 'Répartition des Sanctions par Fonction',
+                    xaxis: { title: 'Nombre de Sanctions' },
+                    yaxis: { title: 'Fonction' }
+                };
+                Plotly.newPlot('discipline-bar-function', [traceBarFunction], layoutBarFunction);
+
+                // Graphique en Barres par Organisme
+                var traceBarOrganisme = {
+                    x: data.discipline_by_organisme.values,
+                    y: data.discipline_by_organisme.labels,
+                    type: 'bar',
+                    orientation: 'h'
+                };
+                var layoutBarOrganisme = {
+                    title: 'Répartition des Sanctions par Organisme',
+                    xaxis: { title: 'Nombre de Sanctions' },
+                    yaxis: { title: 'Organisme' }
+                };
+                Plotly.newPlot('discipline-bar-organisme', [traceBarOrganisme], layoutBarOrganisme);
+            });
+    </script>
+</body>
+</html>
+{% endblock %}

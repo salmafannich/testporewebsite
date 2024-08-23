@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add New Record</h2>
+<form method="POST">
+    <style>
+        /* Ajuster la largeur de la liste pour correspondre à l'input */
+        input[list] {
+            width: 100%;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        /* Ajouter une légère animation pour l'apparition de la liste */
+        datalist option {
+            transition: background-color 0.2s ease-in-out;
+        }
+    
+        /* Changer la couleur de fond lors du survol des options */
+        datalist option:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+    <div class="form-group">
+        <label for="affectation">AFFECTATION</label>
+        <input type="text" class="form-control" id="affectation" name="affectation">
+    </div>
+    <div class="form-group">
+        <label for="mat">MAT</label>
+        <input type="text" class="form-control" id="mat" name="mat">
+    </div>
+    <div class="form-group">
+        <label for="nom_prenom">NOM ET PRENOM</label>
+        <input type="text" class="form-control" id="nom_prenom" name="nom_prenom">
+    </div>
+    <div class="form-group">
+        <label for="fonction">FONCTION</label>
+        <input list="fonctions" class="form-control" id="fonction" name="fonction" placeholder="Sélectionnez ou entrez une fonction">
+        <datalist id="fonctions">
+            {% for fonction in fonctions %}
+                <option value="{{ fonction }}">
+            {% endfor %}
+        </datalist>
+    </div>
+    
+    <div class="form-group">
+        <label for="cin">CIN</label>
+        <input type="text" class="form-control" id="cin" name="cin">
+    </div>
+    <div class="form-group">
+        <label for="d_embauche">D EMBAUCHE</label>
+        <input type="date" class="form-control" id="d_embauche" name="d_embauche">
+    </div>
+    <div class="form-group">
+        <label for="date_recharge_epi">Date récharge EPI</label>
+        <input type="date" class="form-control" id="date_recharge_epi" name="date_recharge_epi">
+    </div>
+    <div class="form-group">
+        <label for="site">SITE</label>
+        <input type="text" class="form-control" id="site" name="site">
+    </div>
+    <div class="form-group">
+        <label for="casque_nombre">Casque: Nombre</label>
+        <input type="number" class="form-control" id="casque_nombre" name="casque_nombre">
+    </div>
+    <div class="form-group">
+        <label for="casque_taille_type">Casque: Taille/type</label>
+        <input type="text" class="form-control" id="casque_taille_type" name="casque_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="casque_date_remise">Casque: date de remise</label>
+        <input type="date" class="form-control" id="casque_date_remise" name="casque_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="chaussures_nombre">Chaussures: Nombre</label>
+        <input type="number" class="form-control" id="chaussures_nombre" name="chaussures_nombre">
+    </div>
+    <div class="form-group">
+        <label for="chaussures_taille_type">Chaussures: Taille/type</label>
+        <input type="text" class="form-control" id="chaussures_taille_type" name="chaussures_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="chaussures_date_remise">Chaussures: date de remise</label>
+        <input type="date" class="form-control" id="chaussures_date_remise" name="chaussures_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="gants_nombre">Gants: Nombre</label>
+        <input type="number" class="form-control" id="gants_nombre" name="gants_nombre">
+    </div>
+    <div class="form-group">
+        <label for="gants_taille_type">Gants: Taille/type</label>
+        <input type="text" class="form-control" id="gants_taille_type" name="gants_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="gants_date_remise">Gants: date de remise</label>
+        <input type="date" class="form-control" id="gants_date_remise" name="gants_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="gilet_fluorescent_nombre">Gilet fluoreçant: Nombre</label>
+        <input type="number" class="form-control" id="gilet_fluorescent_nombre" name="gilet_fluorescent_nombre">
+    </div>
+    <div class="form-group">
+        <label for="gilet_fluorescent_taille_type">Gilet fluoreçant: Taille/type</label>
+        <input type="text" class="form-control" id="gilet_fluorescent_taille_type" name="gilet_fluorescent_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="gilet_fluorescent_date_remise">Gilet fluoreçant: date de remise</label>
+        <input type="date" class="form-control" id="gilet_fluorescent_date_remise" name="gilet_fluorescent_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="combinaison_impermeable_nombre">Combinaison imperméable: Nombre</label>
+        <input type="number" class="form-control" id="combinaison_impermeable_nombre" name="combinaison_impermeable_nombre">
+    </div>
+    <div class="form-group">
+        <label for="combinaison_impermeable_taille_type">Combinaison imperméable: Taille/type</label>
+        <input type="text" class="form-control" id="combinaison_impermeable_taille_type" name="combinaison_impermeable_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="combinaison_impermeable_date_remise">Combinaison imperméable: date de remise</label>
+        <input type="date" class="form-control" id="combinaison_impermeable_date_remise" name="combinaison_impermeable_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="lunettes_nombre">Lunettes (Anti-poussière ): Nombre</label>
+        <input type="number" class="form-control" id="lunettes_nombre" name="lunettes_nombre">
+    </div>
+    <div class="form-group">
+        <label for="lunettes_taille_type">Lunettes (Anti-poussière ): Taille/type</label>
+        <input type="text" class="form-control" id="lunettes_taille_type" name="lunettes_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="lunettes_date_remise">Lunettes (Anti-poussière ): date de remise</label>
+        <input type="date" class="form-control" id="lunettes_date_remise" name="lunettes_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="bote_securite_nombre">Bote de sécurité: Nombre</label>
+        <input type="number" class="form-control" id="bote_securite_nombre" name="bote_securite_nombre">
+    </div>
+    <div class="form-group">
+        <label for="bote_securite_taille_type">Bote de sécurité: Taille/type</label>
+        <input type="text" class="form-control" id="bote_securite_taille_type" name="bote_securite_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="bote_securite_date_remise">Bote de sécurité: date de remise</label>
+        <input type="date" class="form-control" id="bote_securite_date_remise" name="bote_securite_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="gilet_sauvetage_nombre">Gilet de sauvetage: Nombre</label>
+        <input type="number" class="form-control" id="gilet_sauvetage_nombre" name="gilet_sauvetage_nombre">
+    </div>
+    <div class="form-group">
+        <label for="gilet_sauvetage_taille_type">Gilet de sauvetage: Taille/type</label>
+        <input type="text" class="form-control" id="gilet_sauvetage_taille_type" name="gilet_sauvetage_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="gilet_sauvetage_date_remise">Gilet de sauvetage: date de remise</label>
+        <input type="date" class="form-control" id="gilet_sauvetage_date_remise" name="gilet_sauvetage_date_remise">
+    </div>
+    <div class="form-group">
+        <label for="autre_nombre">Autre: Nombre</label>
+        <input type="number" class="form-control" id="autre_nombre" name="autre_nombre">
+    </div>
+    <div class="form-group">
+        <label for="autre_taille_type">Autre: Taille/type</label>
+        <input type="text" class="form-control" id="autre_taille_type" name="autre_taille_type">
+    </div>
+    <div class="form-group">
+        <label for="autre_date_remise">Autre: date de remise</label>
+        <input type="date" class="form-control" id="autre_date_remise" name="autre_date_remise">
+    </div>
+    <button type="submit" class="btn btn-primary">Add</button>
+</form>
+{% endblock %}

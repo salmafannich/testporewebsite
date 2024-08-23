@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard des Visites Médicales</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Dashboard des Visites Médicales</h1>
+
+    <!-- Graphique en Barres par Fonction -->
+    <div id="medical-bar-function" style="width: 100%; height: 500px;"></div>
+
+    <!-- Graphique en Courbes par Date de Dernière Visite -->
+    <div id="medical-line-last-visit" style="width: 100%; height: 500px;"></div>
+
+    <!-- Graphique en Courbes par Date de Visite Programmée -->
+    <div id="medical-line-scheduled-visit" style="width: 100%; height: 500px;"></div>
+
+    <!-- Graphique en Barres par Nombre de Certificats d'Aptitude Physique d'Embauche -->
+    <div id="medical-bar-certificates" style="width: 100%; height: 500px;"></div>
+
+    <script>
+        fetch('/api/visite_medicale_data')
+            .then(response => response.json())
+            .then(data => {
+                // Graphique en Barres par Fonction
+                var traceBarFunction = {
+                    x: data.medical_by_function.labels,
+                    y: data.medical_by_function.values,
+                    type: 'bar'
+                };
+                var layoutBarFunction = {
+                    title: 'Répartition des Visites Médicales par Fonction',
+                    xaxis: { title: 'Fonction' },
+                    yaxis: { title: 'Nombre de Visites' }
+                };
+                Plotly.newPlot('medical-bar-function', [traceBarFunction], layoutBarFunction);
+
+                // Graphique en Courbes par Date de Dernière Visite
+                var traceLineLastVisit = {
+                    x: data.medical_by_last_visit.dates,
+                    y: data.medical_by_last_visit.counts,
+                    type: 'scatter',
+                    mode: 'lines+markers'
+                };
+                var layoutLineLastVisit = {
+                    title: 'Évolution des Visites Médicales par Date de Dernière Visite',
+                    xaxis: { title: 'Date de Dernière Visite' },
+                    yaxis: { title: 'Nombre de Visites' }
+                };
+                Plotly.newPlot('medical-line-last-visit', [traceLineLastVisit], layoutLineLastVisit);
+
+                // Graphique en Courbes par Date de Visite Programmée
+                var traceLineScheduledVisit = {
+                    x: data.medical_by_scheduled_visit.dates,
+                    y: data.medical_by_scheduled_visit.counts,
+                    type: 'scatter',
+                    mode: 'lines+markers'
+                };
+                var layoutLineScheduledVisit = {
+                    title: 'Évolution des Visites Médicales par Date de Visite Programmée',
+                    xaxis: { title: 'Date de Visite Programmée' },
+                    yaxis: { title: 'Nombre de Visites' }
+                };
+                Plotly.newPlot('medical-line-scheduled-visit', [traceLineScheduledVisit], layoutLineScheduledVisit);
+
+                // Graphique en Barres par Nombre de Certificats d'Aptitude Physique d'Embauche
+                var traceBarCertificates = {
+                    x: data.medical_by_certificates.labels,
+                    y: data.medical_by_certificates.counts,
+                    type: 'bar'
+                };
+                var layoutBarCertificates = {
+                    title: 'Répartition des Certificats d\'Aptitude Physique d\'Embauche',
+                    xaxis: { title: 'Certificat d\'aptitude physique' },
+                    yaxis: { title: 'Nombre de Certificats' }
+                };
+                Plotly.newPlot('medical-bar-certificates', [traceBarCertificates], layoutBarCertificates);
+            });
+    </script>
+</body>
+</html>
+{% endblock %}

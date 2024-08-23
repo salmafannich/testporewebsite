@@ -3196,133 +3196,25 @@ def visite_medicale_data():
     return jsonify(data)
 
 
-import pdfkit
-from io import BytesIO
-import qrcode
-from flask import Flask, request, make_response, send_file, redirect, url_for, render_template, flash
-import pdfkit
-import qrcode
-import io
 import requests
 import msal
 import os
-
-# Configuration de pdfkit
-path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
-
-# Configuration des informations d'application
-CLIENT_ID = 'a8796c3f-5c18-4b36-b80c-3ca225a02320'
-CLIENT_SECRET = 'u2Z8Q~KjE.ksWU7L8CPdaXR-64k1FoZf1-hw_atb'
-TENANT_ID = 'eb12f8ec-35f2-415d-97bf-0e34301876a7'
-AUTHORITY = f'https://login.microsoftonline.com/{TENANT_ID}'
-SCOPE = ['https://graph.microsoft.com/.default']
-
-def get_access_token():
-    app = msal.ConfidentialClientApplication(
-        CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
-    )
-    result = app.acquire_token_for_client(scopes=SCOPE)
-    if 'access_token' in result:
-        return result['access_token']
-    raise Exception('Erreur lors de l\'obtention du token d\'accès: ' + result.get('error', 'Unknown error'))
-
-def get_drive_id(access_token):
-    headers = {'Authorization': f'Bearer {access_token}'}
-    response = requests.get('https://graph.microsoft.com/v1.0/me/drives', headers=headers)
-    if response.status_code == 200:
-        drives = response.json()
-        if drives.get('value'):
-            return drives['value'][0]['id']  # Utiliser le premier drive pour cet exemple
-    raise Exception(f'Erreur lors de la récupération du drive ID: {response.status_code} - {response.text}')
-
 @app.route('/search_employee', methods=['GET', 'POST'])
 def search_employee():
-    pdf = None
     if request.method == 'POST':
         mat = request.form['mat']
         # Remplacez get_employee_info par votre fonction réelle pour obtenir les détails
-        employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details,recompense_details = get_employee_info(mat)
+        employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details, recompense_details = get_employee_info(mat)
         
         if employee_info:
-            action = request.form.get('action')
-            
-            if action == 'download':
-                html = render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details, recompense_details=recompense_details)
-                pdf = pdfkit.from_string(html, False, configuration=config)
-                
-                response = make_response(pdf)
-                response.headers['Content-Type'] = 'application/pdf'
-                response.headers['Content-Disposition'] = f'attachment; filename={mat}_employee_info.pdf'
-                
-                return response
-            
-            elif action == 'generate_qr':
-                if pdf is None:
-                    html = render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details,recompense_details=recompense_details)
-                    pdf = pdfkit.from_string(html, False, configuration=config)
-
-                token = get_access_token()
-                headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/pdf'}
-                
-                try:
-                    drive_id = get_drive_id(token)
-                    
-                    file_name = f'{mat}_employee_info.pdf'
-                    upload_url = f'https://graph.microsoft.com/v1.0/drives/{drive_id}/root:/{file_name}:/content'
-                    response = requests.put(upload_url, headers=headers, data=pdf)
-                    
-                    if response.status_code == 201:
-                        file_url = response.json().get("webUrl")
-                        
-                        qr = qrcode.QRCode(
-                            version=1,
-                            error_correction=qrcode.constants.ERROR_CORRECT_L,
-                            box_size=10,
-                            border=4,
-                        )
-                        qr.add_data(file_url)
-                        qr.make(fit=True)
-                        img = qr.make_image(fill='black', back_color='white')
-                        
-                        img_io = io.BytesIO()
-                        img.save(img_io, 'PNG')
-                        img_io.seek(0)
-                        
-                        return send_file(img_io, mimetype='image/png', as_attachment=True, download_name=f'{mat}_qr_code.png')
-                    else:
-                        flash(f'Erreur lors du téléversement du fichier sur OneDrive: {response.status_code} - {response.text}', 'danger')
-                        return redirect(url_for('search_employee'))
-                
-                except Exception as e:
-                    flash(f'Erreur: {str(e)}', 'danger')
-                    return redirect(url_for('search_employee'))
-            
-            else:
-                return render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details,recompense_details=recompense_details)
+            return render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details, recompense_details=recompense_details)
         
         else:
             flash('MAT not found in any of the files.', 'danger')
             return redirect(url_for('search_employee'))
+    
     return render_template('search_employee.html')
 
-@app.route('/download_pdf/<mat>')
-def download_pdf(mat):
-    employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details = get_employee_info(mat)
-    if employee_info:
-        # Générer le PDF
-        html = render_template('employee_info.html', employee_info=employee_info, epi_details=epi_details, sens_details=sens_details, formation_details=formation_details, disciplinary_details=disciplinary_details, accident_details=accident_details, habilitation_details=habilitation_details, discipline_details=discipline_details, visite_medicale_details=visite_medicale_details)
-        pdf = pdfkit.from_string(html, False, configuration=config)
-        
-        response = make_response(pdf)
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'attachment; filename={mat}_employee_info.pdf'
-        
-        return response
-    else:
-        flash('MAT not found in any of the files.', 'danger')
-        return redirect(url_for('search_employee'))
-    
 @app.route('/view_employee/<mat>')
 def view_employee(mat):
     employee_info, epi_details, sens_details, formation_details, disciplinary_details, accident_details, habilitation_details, discipline_details, visite_medicale_details = get_employee_info(mat)

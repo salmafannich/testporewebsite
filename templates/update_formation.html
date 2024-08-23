@@ -1,9 +1,0 @@
-<form method="POST">
-    {% for col in columns %}
-    <div>
-        <label>{{ col }}</label>
-        <input type="text" name="{{ col }}" value="{{ data[col] }}">
-    </div>
-    {% endfor %}
-    <button type="submit">Mettre à jour</button>
-</form>
